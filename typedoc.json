@@ -1,0 +1,17 @@
+{
+  "entryPoints": ["src/sdk/client.ts"],
+  "out": "docs/sdk",
+  "name": "Notification Hub SDK",
+  "readme": "src/sdk/README.md",
+  "skipErrorChecking": false,
+  "disableSources": true,
+  "navigationLinks": {
+    "Back to project repo": "https://github.com/sophias-hub/notification-hub-service"
+  },
+  "hideGenerator": true,
+  "plugin": ["typedoc-theme-hierarchy"],
+  "theme": "hierarchy",
+  "githubPages": false,
+  "searchInComments": true,
+  "searchInDocuments": true
+}

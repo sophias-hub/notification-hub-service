@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "ts-node-esm src/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:sdk": "tsx src/sdk/test-client.ts",
+    "docs:sdk": "typedoc"
   },
   "repository": {
     "type": "git",
@@ -27,7 +29,12 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.0",
     "typedoc": "^0.28.20",
-    "typescript": "^6.0.3"
+    "typedoc-rhineai-theme": "^1.2.0",
+    "typedoc-theme-fresh": "^0.2.3",
+    "typedoc-theme-hierarchy": "^6.0.0",
+    "typescript": "^6.0.3",
+    "varvara-typedoc-theme": "^0.3.9"
   }
 }

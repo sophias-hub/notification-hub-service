@@ -1,4 +1,4 @@
-import { NotificationClient } from './client';
+import { NotificationClient } from './client.js';
 
 /**
  * Main execution script to verify SDK functionality and API communication.

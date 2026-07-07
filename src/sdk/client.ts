@@ -1,23 +1,58 @@
 /**
- * Interface representing the structure of a notification template.
+ * Represents the notification template structure.
  */
 export interface NotificationTemplate {
+  /**
+   * Human-readable template ID.
+   *
+   * @example 'welcome-email'
+   */
   id: string;
+
+  /**
+   * A descriptive, human-readable template name.
+   *
+   * @example 'Welcome Email Template'
+   */
   name: string;
+
+  /**
+   * Channel for which the notification template is intended.\
+   * Must be exactly 'email', 'sms', or 'push'.
+   *
+   * @example 'email'
+   */
   channel: 'email' | 'sms' | 'push';
 }
 
 /**
- * Interface representing the successful API response details.
+ * Represents the successful API response metadata.
  */
 export interface NotificationResponse {
+  /**
+   * Status message.
+   *
+   * @example 'success'
+   */
   status: string;
+
+  /**
+   * Response message ID.
+   *
+   * @example 'msg-e45dyfoas'
+   */
   messageId: string;
+
+  /**
+   * Notification processing timestamp (UTC ISO-8601).
+   *
+   * @example '2026-07-07T16:55:07.816Z'
+   */
   processedAt: string;
 }
 
 /**
- * Core client class for integrating and interacting with the Notification Hub service.
+ * Core client class for integrating, authenticating, and interacting with the central Notification Hub service.
  * 
  * @example
  * ```typescript
@@ -25,14 +60,23 @@ export interface NotificationResponse {
  * ```
  */
 export class NotificationClient {
+  /**
+   * Authorization key used to authenticate API requests.
+   * @private
+   */
   private apiKey: string;
+
+  /**
+   * Target base URL of the running notification service instance.
+   * @private
+   */
   private baseUrl: string;
 
   /**
-   * Creates an instance of NotificationClient.
+   * Creates an instance of the NotificationClient to manage service connections.
    * 
-   * @param apiKey - The secret authorization key (X-API-Key) used to access the API.
-   * @param baseUrl - The base URL of the running notification service (defaults to http://localhost:3000).
+   * @param apiKey - The secret authorization token passed to the server via the `X-API-Key` header.
+   * @param baseUrl - The target URL of the running notification service.
    */
   constructor(apiKey: string, baseUrl: string = 'http://localhost:3000') {
     this.apiKey = apiKey;
@@ -40,10 +84,9 @@ export class NotificationClient {
   }
 
   /**
-   * Fetches the list of all available notification templates from the system.
+   * Fetches all available (mocked) notification templates.
    * 
-   * @returns A promise resolving to an array of {@link NotificationTemplate} objects.
-   * @throws {Error} If the server returns a non-200 OK status code.
+   * @returns An array of {@link NotificationTemplate} objects.
    */
   async getTemplates(): Promise<NotificationTemplate[]> {
     const response = await fetch(`${this.baseUrl}/api/v1/templates`, {
@@ -63,15 +106,14 @@ export class NotificationClient {
   }
 
   /**
-   * Sends a notification to a specific recipient through the chosen communication channel.
+   * Dispatches a single template-driven notification to a specified recipient over a designated channel.
    * 
-   * @param recipient - The target recipient (e.g., email address, phone number, or device token).
-   * @param channel - The delivery channel ('email', 'sms', or 'push').
-   * @param templateId - The unique identifier of the pre-configured template.
-   * @param templateData - Dynamic JSON key-value pairs used to populate variables inside the template.
+   * @param recipient - The destination address for the message (e.g., an email address, phone number, or device push token).
+   * @param channel - The transmission vector to use ('email', 'sms', or 'push').
+   * @param templateId - The unique system identifier of the template to render.
+   * @param templateData - Key-value metadata mappings used to interpolate variable placeholders inside the template.
    * 
-   * @returns A promise resolving to the {@link NotificationResponse} processing details.
-   * @throws {Error} If the validation fails or authentication key is invalid.
+   * @returns The {@link NotificationResponse} object with transaction tracking parameters.
    */
   async sendNotification(
     recipient: string,
@@ -102,5 +144,23 @@ export class NotificationClient {
     }
 
     return response.json() as Promise<NotificationResponse>;
+  }
+
+  /**
+   * Sends a simple raw string payload directly to a channel.
+   * @deprecated Use {@link sendNotification} instead to send template-backed messages.
+   * 
+   * @param recipient - The destination address for the text string.
+   * @param channel - The transmission vector to use ('email', 'sms', or 'push').
+   * @param rawMessage - The unformatted string payload body.
+   * 
+   * @returns A {@link NotificationResponse} object.
+   */
+  async send(
+    recipient: string,
+    channel: 'email' | 'sms' | 'push',
+    rawMessage: string
+  ): Promise<NotificationResponse> {
+    return this.sendNotification(recipient, channel, 'legacy-raw-template', { body: rawMessage });
   }
 }
