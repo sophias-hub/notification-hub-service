@@ -1,0 +1,31 @@
+{
+  "name": "notification-hub-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sophias-hub/notification-hub-service.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sophias-hub/notification-hub-service/issues"
+  },
+  "homepage": "https://github.com/sophias-hub/notification-hub-service#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.0",
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.28.20",
+    "typescript": "^6.0.3"
+  }
+}
