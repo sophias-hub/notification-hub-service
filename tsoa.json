@@ -1,0 +1,33 @@
+{
+  "entryFile": "src/server.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/controllers/**/*.ts"],
+  "routes": {
+    "routesDir": "src",
+    "authenticationModule": "src/authentication.ts"
+  },
+  "spec": {
+    "outputDirectory": "docs/api",
+    "specVersion": 2,
+    "info": {
+      "title": "🚀 Notification Hub API",
+      "version": "1.0.0"
+    },
+    "specMetaData": {
+      "servers": [
+        {
+          "url": "http://localhost:3000",
+          "description": "Local Express API Server"
+        }
+      ]
+    },
+    "securityDefinitions": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "🔑 Enter your secure token (e.g., secure-token-123) to authorize requests."
+      }
+    }
+  }
+}

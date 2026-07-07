@@ -66,7 +66,7 @@ app.post('/api/v1/send', authenticateApiKey, (req: Request, res: Response) => {
   console.log(`[SUCCESS] Message processed. Channel: ${channel} | Recipient: ${recipient}`);
 
   // Generate a random message tracking ID for the developer response
-  const mockMessageId = `msg-${Math.random().toString(36).substr(2, 9)}`;
+  const mockMessageId = `msg-${Math.random().toString(36).substring(2, 11)}`;
 
   res.status(200).json({
     status: 'success',
@@ -76,6 +76,9 @@ app.post('/api/v1/send', authenticateApiKey, (req: Request, res: Response) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Notification Hub server is running locally on http://localhost:${PORT}`);
 });
+
+// Export both app and the live server instance for testing purposes
+export { app, server };
