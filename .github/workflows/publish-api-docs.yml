@@ -1,4 +1,4 @@
-name: Publish SDK docs to docs-sdk repo
+name: Publish API docs to docs-api repo
 
 on:
   push:
@@ -20,14 +20,14 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run docs:sdk
+      - run: npm run docs:api:site
 
-      - name: Publish TypeDoc site to sophias-hub/docs-sdk
+      - name: Publish Swagger UI site to sophias-hub/docs-api
         uses: peaceiris/actions-gh-pages@v4
         with:
-          deploy_key: ${{ secrets.DOCS_SDK_DEPLOY_KEY }}
-          external_repository: sophias-hub/docs-sdk
+          deploy_key: ${{ secrets.DOCS_API_DEPLOY_KEY }}
+          external_repository: sophias-hub/docs-api
           publish_branch: main
-          publish_dir: docs/sdk
+          publish_dir: docs/api-site
           destination_dir: .
           keep_files: false
