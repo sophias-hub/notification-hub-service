@@ -9,8 +9,13 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --forceExit",
     "test:sdk": "tsx src/sdk/test-client.ts",
     "docs:sdk": "typedoc",
-    "docs:api": "tsoa spec && tsx scripts/swagger-docs.ts", // builds the API documentation locally
-    "docs:api:site": "tsoa spec && tsx scripts/build-swagger-ui-static.ts" // builds the API documentation and publishes it to the `docs-api` repo
+    "docs:api": "tsoa spec && tsx scripts/swagger-docs.ts",
+    "docs:api:site": "tsoa spec && tsx scripts/build-swagger-ui-static.ts"
+  },
+  "scriptsComments": {
+    "docs:sdk": "Generate TypeDoc SDK reference into docs/sdk/",
+    "docs:api": "Generate OpenAPI spec and run local Swagger UI at http://localhost:8080/docs",
+    "docs:api:site": "Generate OpenAPI spec and build static Swagger UI site into docs/api-site/ for docs-api publish"
   },
   "repository": {
     "type": "git",
