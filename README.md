@@ -57,6 +57,7 @@ Run these from the repo root after `npm install`.
 | `npm run docs:sdk` | Build SDK reference (TypeDoc) | `docs/sdk/` |
 | `npm run docs:api` | Generate OpenAPI and start local Swagger UI | `http://localhost:8080/docs` |
 | `npm run docs:api:site` | Build static Swagger UI site for publishing | `docs/api-site/` |
+| `npm run docs:finalize` | Add provenance metadata and banner to built doc sites | `docs/sdk/`, `docs/api-site/` |
 
 Open generated HTML locally, for example:
 

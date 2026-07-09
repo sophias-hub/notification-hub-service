@@ -68,8 +68,7 @@ jobs:
       - run: npx tsoa spec && npx swagger-cli validate docs/api/swagger.json
       - run: npm run docs:sdk
       - run: npm run docs:api:site
-      - run: bash scripts/generate-docs-meta.sh docs/meta.json
-      - run: cp docs/meta.json docs/sdk/meta.json && cp docs/meta.json docs/api-site/meta.json
+      - run: npm run docs:finalize
 
       - name: Upload SDK docs artifact
         uses: actions/upload-artifact@v4
