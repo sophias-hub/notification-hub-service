@@ -10,12 +10,14 @@
     "test:sdk": "tsx src/sdk/test-client.ts",
     "docs:sdk": "typedoc",
     "docs:api": "tsoa spec && tsx scripts/swagger-docs.ts",
-    "docs:api:site": "tsoa spec && tsx scripts/build-swagger-ui-static.ts"
+    "docs:api:site": "tsoa spec && tsx scripts/build-swagger-ui-static.ts",
+    "validate": "bash scripts/validate.sh"
   },
   "scriptsComments": {
     "docs:sdk": "Generate TypeDoc SDK reference into docs/sdk/",
     "docs:api": "Generate OpenAPI spec and run local Swagger UI at http://localhost:8080/docs",
-    "docs:api:site": "Generate OpenAPI spec and build static Swagger UI site into docs/api-site/ for docs-api publish"
+    "docs:api:site": "Generate OpenAPI spec and build static Swagger UI site into docs/api-site/ for docs-api publish",
+    "validate": "Lint Markdown prose (Vale) and check links (Lychee)"
   },
   "repository": {
     "type": "git",
@@ -55,6 +57,7 @@
     "typedoc-rhineai-theme": "^1.2.0",
     "typedoc-theme-fresh": "^0.2.3",
     "typedoc-theme-hierarchy": "^6.0.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@apidevtools/swagger-cli": "^4.0.4"
   }
 }

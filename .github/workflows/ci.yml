@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Cache Vale styles
+        uses: actions/cache@v4
+        with:
+          path: .vale/styles
+          key: vale-styles-${{ hashFiles('.vale.ini') }}
+
+      - name: Install Vale
+        run: |
+          if ! command -v vale >/dev/null 2>&1; then
+            curl -sfL https://install.vale.sh | sh -s -- -b /usr/local/bin
+          fi
+
+      - name: Cache Lychee
+        id: lychee-cache
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/lychee
+          key: lychee-0.18.1-${{ runner.os }}
+
+      - name: Install Lychee
+        if: steps.lychee-cache.outputs.cache-hit != 'true'
+        run: |
+          LYCHEE_VERSION=0.18.1
+          curl -sLO "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-v${LYCHEE_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          tar -xzf "lychee-v${LYCHEE_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          sudo mv lychee /usr/local/bin/lychee
+
+      - name: Run validation
+        run: npm run validate
+
+  test-and-build-docs:
+    name: Test and build docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npx tsoa spec && npx swagger-cli validate docs/api/swagger.json
+      - run: npm run docs:sdk
+      - run: npm run docs:api:site
+      - run: bash scripts/generate-docs-meta.sh docs/meta.json
+      - run: cp docs/meta.json docs/sdk/meta.json && cp docs/meta.json docs/api-site/meta.json
+
+      - name: Upload SDK docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-docs
+          path: docs/sdk
+
+      - name: Upload API docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api-site
+
+      - name: Upload docs metadata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-meta
+          path: docs/meta.json
+
+  publish-sdk-docs:
+    name: Publish SDK docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [validate, test-and-build-docs]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download SDK docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sdk-docs
+          path: docs/sdk
+
+      - name: Publish to sophias-hub/docs-sdk
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.DOCS_SDK_DEPLOY_KEY }}
+          external_repository: sophias-hub/docs-sdk
+          publish_branch: main
+          publish_dir: docs/sdk
+          destination_dir: .
+          keep_files: false
+
+  publish-api-docs:
+    name: Publish API docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [validate, test-and-build-docs]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download API docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api-site
+
+      - name: Publish to sophias-hub/docs-api
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.DOCS_API_DEPLOY_KEY }}
+          external_repository: sophias-hub/docs-api
+          publish_branch: main
+          publish_dir: docs/api-site
+          destination_dir: .
+          keep_files: false
