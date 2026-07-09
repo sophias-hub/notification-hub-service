@@ -22,38 +22,57 @@ jobs:
 
       - run: npm ci
 
+      - name: Prepare local bin
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Cache Vale styles
         uses: actions/cache@v4
         with:
           path: .vale/styles
           key: vale-styles-${{ hashFiles('.vale.ini') }}
 
+      - name: Cache Vale
+        id: vale-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/vale
+          key: vale-${{ runner.os }}-v1
+
       - name: Install Vale
-        run: |
-          if ! command -v vale >/dev/null 2>&1; then
-            curl -sfL https://install.vale.sh | sh -s -- -b /usr/local/bin
-          fi
+        if: steps.vale-cache.outputs.cache-hit != 'true'
+        run: curl -sfL https://install.vale.sh | sh -s -- -b "$HOME/.local/bin"
+
+      - name: Verify Vale
+        run: vale --version
 
       - name: Cache Lychee
         id: lychee-cache
         uses: actions/cache@v4
         with:
-          path: /usr/local/bin/lychee
+          path: ~/.local/bin/lychee
           key: lychee-0.18.1-${{ runner.os }}
 
       - name: Install Lychee
         if: steps.lychee-cache.outputs.cache-hit != 'true'
         run: |
           LYCHEE_VERSION=0.18.1
-          curl -sLO "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-v${LYCHEE_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          tar -xzf "lychee-v${LYCHEE_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          sudo mv lychee /usr/local/bin/lychee
+          curl -sfL -o lychee.tar.gz \
+            "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz"
+          tar -xzf lychee.tar.gz
+          mv lychee "$HOME/.local/bin/lychee"
+          rm lychee.tar.gz
+
+      - name: Verify Lychee
+        run: lychee --version
 
       - name: Run validation
         run: npm run validate
 
   test-and-build-docs:
     name: Test and build docs
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
