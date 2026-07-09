@@ -3,6 +3,7 @@
   "out": "docs/sdk",
   "name": "Notification Hub SDK",
   "readme": "src/sdk/README.md",
+  "tsconfig": "tsconfig.typedoc.json",
   "skipErrorChecking": false,
   "disableSources": true,
   "navigationLinks": {
