@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 // Initialize dotenv configuration for environment variables
 dotenv.config();
@@ -11,6 +12,15 @@ const VALID_API_KEY = 'secure-token-123';
 
 // Middleware to automatically parse incoming JSON request bodies
 app.use(express.json());
+
+// Allow Swagger UI (and other local clients) to call the API cross-origin.
+app.use(
+  cors({
+    origin: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-API-Key'],
+  })
+);
 
 /**
  * Middleware to authenticate requests using the X-API-Key header.
