@@ -1,0 +1,102 @@
+name: Docs hub agent
+
+# On service main code merges: Diátaxis-route + Gemini update → PR in sophias-hub/docs.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "sdks/**"
+      - "package.json"
+      - "tsoa.json"
+      - "Dockerfile*"
+      - "docker-compose.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-hub-agent-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  open-docs-pr:
+    name: Open Diátaxis docs PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout service
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Checkout docs hub
+        uses: actions/checkout@v4
+        with:
+          repository: sophias-hub/docs
+          token: ${{ secrets.DOCS_HUB_TOKEN }}
+          path: docs-hub
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Collect commit metadata
+        run: |
+          {
+            echo "COMMIT_MSG<<EOF"
+            git log -1 --pretty=%B
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+          echo "COMMIT_SHA=${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Run Diátaxis + Gemini agent
+        id: agent
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DOCS_HUB_PATH: ${{ github.workspace }}/docs-hub
+          COMMIT_SHA: ${{ env.COMMIT_SHA }}
+          COMMIT_MSG: ${{ env.COMMIT_MSG }}
+        run: node scripts/docs-hub-agent.mjs
+
+      - name: Read agent result
+        id: result
+        run: |
+          if [ ! -f docs-hub-agent-result.json ]; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "summary=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          SKIPPED=$(node -e "const r=require('./docs-hub-agent-result.json'); process.stdout.write(String(!!r.skipped))")
+          SUMMARY=$(node -e "const r=require('./docs-hub-agent-result.json'); process.stdout.write((r.summary||'').replace(/\n/g,' '))")
+          UPDATED=$(node -e "const r=require('./docs-hub-agent-result.json'); process.stdout.write((r.updated||[]).join(', '))")
+          echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
+          echo "summary=$SUMMARY" >> "$GITHUB_OUTPUT"
+          echo "updated=$UPDATED" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request in docs hub
+        if: steps.result.outputs.skipped != 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.DOCS_HUB_TOKEN }}
+          path: docs-hub
+          commit-message: |
+            sync(docs): update hub from notification-hub-service@${{ github.sha }}
+
+            ${{ steps.result.outputs.summary }}
+          branch: chore/sync-from-service-${{ github.sha }}
+          title: "docs: sync from notification-hub-service@${{ github.sha }}"
+          body: |
+            ## Summary
+            ${{ steps.result.outputs.summary }}
+
+            Automated Diátaxis docs update from service commit
+            [`${{ github.sha }}`](https://github.com/sophias-hub/notification-hub-service/commit/${{ github.sha }}).
+
+            **Pages updated:** ${{ steps.result.outputs.updated }}
+
+            ## Notes
+            - Label: `generated-docs`
+            - No auto-merge — please review before merging
+            - Workflow: [Docs hub agent](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          labels: generated-docs
+          delete-branch: true

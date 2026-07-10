@@ -80,6 +80,33 @@ brew install vale lychee
 
 On push to `main`, CI runs tests, builds docs, validates Markdown, and publishes to the `docs-sdk` and `docs-api` repos.
 
+### Docs hub agent (Diátaxis PRs)
+
+When product code merges to `main`, workflow `.github/workflows/docs-hub-agent.yml`:
+
+1. Routes the change to Diátaxis pages in `sophias-hub/docs`
+2. Asks Gemini to update those AsciiDoc files
+3. Opens a PR labeled `generated-docs` (no auto-merge; skipped if nothing changed)
+
+**Required Actions secrets** (repo Settings → Secrets):
+
+| Secret | Purpose |
+|--------|---------|
+| `GEMINI_API_KEY` | Google AI Studio API key |
+| `DOCS_HUB_TOKEN` | Fine-grained PAT with Contents + Pull requests write on `sophias-hub/docs` |
+
+Also create the `generated-docs` label once on the docs hub repo.
+
+Local dry-run (with a local clone of the docs hub):
+
+```bash
+export GEMINI_API_KEY=...
+export DOCS_HUB_PATH=/path/to/docs
+export COMMIT_SHA=$(git rev-parse HEAD)
+export COMMIT_MSG=$(git log -1 --pretty=%s)
+node scripts/docs-hub-agent.mjs
+```
+
 ---
 
 ## Documentation

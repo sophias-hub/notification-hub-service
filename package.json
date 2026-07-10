@@ -15,6 +15,7 @@
     "docs:api": "tsoa spec && tsx scripts/swagger-docs.ts",
     "docs:api:site": "tsoa spec && tsx scripts/build-swagger-ui-static.ts",
     "docs:finalize": "bash scripts/finalize-docs.sh",
+    "docs:hub-agent": "node scripts/docs-hub-agent.mjs",
     "validate": "bash scripts/validate.sh"
   },
   "scriptsComments": {
@@ -25,6 +26,7 @@
     "docs:api": "Generate OpenAPI spec and run local Swagger UI at http://localhost:8080/docs",
     "docs:api:site": "Generate OpenAPI spec and build static Swagger UI into docs/api-site/ (set PUBLIC_API_URL for Try it out)",
     "docs:finalize": "Generate meta.json and inject provenance banners into docs/sdk and docs/api-site",
+    "docs:hub-agent": "Diátaxis-route a service change and ask Gemini to update matching pages in DOCS_HUB_PATH",
     "validate": "Lint Markdown prose (Vale) and check links (Lychee)"
   },
   "repository": {
