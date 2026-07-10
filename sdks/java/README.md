@@ -48,7 +48,17 @@ mvn -q test-compile exec:java
 mvn -q test-compile exec:java -Dexec.args="secure-token-123 http://localhost:3000"
 ```
 
-## API surface
+## Docs
+
+Javadoc is generated into `docs/sdk/java/` with a modern theme overlay (`src/main/javadoc/modern-theme.css`).
+
+```bash
+# from notification-hub-service/
+npm run docs:sdk:java
+open docs/sdk/java/index.html
+```
+
+Published at: https://sophias-hub.github.io/docs-sdk/java/
 
 | Method | HTTP |
 | --- | --- |
