@@ -28,6 +28,12 @@ coverage/
 # Generated docs (SDK, API site, OpenAPI, provenance)
 docs/*
 
+# Language SDK build artifacts
+sdks/java/target/
+sdks/python/**/*.egg-info/
+sdks/python/build/
+sdks/python/dist/
+
 # macOS Finder "Copy" duplicates (e.g. "file 2.sh")
 * 2.*
 * 2

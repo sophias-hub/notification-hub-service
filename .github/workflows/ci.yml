@@ -89,6 +89,20 @@ jobs:
           node-version: 24
           cache: npm
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+          cache-dependency-path: sdks/java/pom.xml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Maven
+        run: sudo apt-get update && sudo apt-get install -y maven
+
       - run: npm ci
       - run: npm test
       - run: npx tsoa spec && npx swagger-cli validate docs/api/swagger.json

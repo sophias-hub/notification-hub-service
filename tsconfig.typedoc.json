@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["src/sdk/**/*.ts"],
+  "include": ["sdks/typescript/**/*.ts"],
   "exclude": [
     "**/*.test.ts",
     "**/*.spec.ts",

@@ -1,12 +1,13 @@
 {
-  "entryPoints": ["src/sdk/client.ts"],
-  "out": "docs/sdk",
-  "name": "Notification Hub SDK",
-  "readme": "src/sdk/README.md",
+  "entryPoints": ["sdks/typescript/client.ts"],
+  "out": "docs/sdk/typescript",
+  "name": "Notification Hub SDK (TypeScript)",
+  "readme": "sdks/typescript/README.md",
   "tsconfig": "tsconfig.typedoc.json",
   "skipErrorChecking": false,
   "disableSources": true,
   "navigationLinks": {
+    "All SDKs": "https://sophias-hub.github.io/docs-sdk/",
     "Back to project repo": "https://github.com/sophias-hub/notification-hub-service"
   },
   "hideGenerator": true,

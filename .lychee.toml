@@ -8,7 +8,10 @@ exclude_path = [
 ]
 
 # Local dev URLs are expected in examples; skip network checks for them.
+# Language SDK subpaths are excluded until the first main publish that builds
+# docs/sdk/{typescript,java,python}/ (site root index already exists).
 exclude = [
   '^http://localhost',
   '^https://localhost',
+  '^https://sophias-hub\.github\.io/docs-sdk/(typescript|java|python)/?',
 ]
