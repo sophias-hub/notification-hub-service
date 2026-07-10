@@ -1,0 +1,122 @@
+/*
+ * Modern theme overlay for Notification Hub Java SDK docs.
+ * Loaded with --add-stylesheet on top of the JDK default stylesheet.
+ */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  /* Typography */
+  --body-font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --block-font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --code-font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --body-font-size: 15px;
+  --block-font-size: 15px;
+  --code-font-size: 13.5px;
+  --nav-font-size: 13.5px;
+  --block-line-height: 1.6;
+
+  /* Layout */
+  --top-nav-height: 52px;
+  --sub-nav-height: 40px;
+  --max-content-width: 1100px;
+
+  /* Surfaces — cool slate, not the default blue/orange Javadoc look */
+  --body-text-color: #0f172a;
+  --block-text-color: #1e293b;
+  --body-background-color: #f8fafc;
+  --section-background-color: #ffffff;
+  --detail-background-color: #ffffff;
+  --code-background-color: #f1f5f9;
+  --mark-background-color: #e2e8f0;
+  --detail-block-color: #f1f5f9;
+
+  --navbar-background-color: #0f172a;
+  --navbar-text-color: #f8fafc;
+  --subnav-background-color: #e2e8f0;
+  --subnav-link-color: #0f766e;
+  --member-heading-background-color: #e2e8f0;
+
+  --selected-background-color: #0d9488;
+  --selected-text-color: #ffffff;
+  --selected-link-color: #ffffff;
+
+  --table-header-color: #e2e8f0;
+  --even-row-color: #ffffff;
+  --odd-row-color: #f1f5f9;
+
+  --title-color: #0f172a;
+  --link-color: #0f766e;
+  --link-color-active: #115e59;
+
+  --toc-background-color: #ffffff;
+  --toc-highlight-color: #ccfbf1;
+  --toc-hover-color: #f0fdfa;
+
+  --snippet-background-color: #0f172a;
+  --snippet-text-color: #e2e8f0;
+  --snippet-highlight-color: #5eead4;
+  --pre-background-color: #0f172a;
+  --pre-text-color: #e2e8f0;
+
+  --border-color: #cbd5e1;
+  --table-border-color: #cbd5e1;
+
+  --search-input-background-color: #ffffff;
+  --search-input-text-color: #0f172a;
+  --search-input-placeholder-color: #64748b;
+  --search-tag-highlight-color: #99f6e4;
+
+  --copy-icon-brightness: 120%;
+  --copy-button-background-color-active: rgba(13, 148, 136, 0.2);
+}
+
+/* Soften chrome and tighten the reading column */
+body {
+  letter-spacing: 0.01em;
+}
+
+.top-nav,
+.topNav {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+main,
+.main-content,
+.contentContainer,
+.flex-content {
+  border-radius: 0;
+}
+
+div.header h1.title,
+h1.title,
+.title {
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
+
+a:link,
+a:visited {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+.member-signature,
+.memberSignature,
+pre,
+.code,
+.code-block {
+  border-radius: 8px;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.summary-table,
+.details-table,
+.caption {
+  border-radius: 8px;
+}

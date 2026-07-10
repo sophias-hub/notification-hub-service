@@ -42,6 +42,11 @@
           <windowtitle>Notification Hub SDK (Java)</windowtitle>
           <failOnError>true</failOnError>
           <doclint>none</doclint>
+          <!-- Overlay modern theme (path relative to javadocDirectory; avoids spaces in CLI args). -->
+          <javadocDirectory>${project.basedir}/src/main/javadoc</javadocDirectory>
+          <addStylesheets>
+            <addStylesheet>modern-theme.css</addStylesheet>
+          </addStylesheets>
         </configuration>
       </plugin>
       <plugin>

@@ -18,6 +18,13 @@ if ! command -v mvn >/dev/null 2>&1; then
 fi
 rm -rf "${OUT_ROOT}/java"
 mvn -f sdks/java -q javadoc:javadoc
+# Some Maven Javadoc versions nest under apidocs/; flatten for /docs-sdk/java/.
+if [[ -f "${OUT_ROOT}/java/apidocs/index.html" && ! -f "${OUT_ROOT}/java/index.html" ]]; then
+  shopt -s dotglob nullglob
+  mv "${OUT_ROOT}/java/apidocs"/* "${OUT_ROOT}/java/"
+  rmdir "${OUT_ROOT}/java/apidocs"
+  shopt -u dotglob nullglob
+fi
 if [[ ! -f "${OUT_ROOT}/java/index.html" ]]; then
   echo "Javadoc did not produce ${OUT_ROOT}/java/index.html"
   echo "Contents of ${OUT_ROOT}:"
