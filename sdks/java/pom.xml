@@ -36,11 +36,11 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.11.2</version>
         <configuration>
-          <reportOutputDirectory>${project.basedir}/../../docs/sdk</reportOutputDirectory>
-          <destDir>java</destDir>
+          <!-- javadoc:javadoc uses outputDirectory (not reportOutputDirectory). -->
+          <outputDirectory>${project.basedir}/../../docs/sdk/java</outputDirectory>
           <doctitle>Notification Hub SDK (Java)</doctitle>
           <windowtitle>Notification Hub SDK (Java)</windowtitle>
-          <failOnError>false</failOnError>
+          <failOnError>true</failOnError>
           <doclint>none</doclint>
         </configuration>
       </plugin>

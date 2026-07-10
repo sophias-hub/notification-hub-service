@@ -16,7 +16,16 @@ if ! command -v mvn >/dev/null 2>&1; then
   echo "Missing required command: mvn (Maven)"
   exit 1
 fi
+rm -rf "${OUT_ROOT}/java"
 mvn -f sdks/java -q javadoc:javadoc
+if [[ ! -f "${OUT_ROOT}/java/index.html" ]]; then
+  echo "Javadoc did not produce ${OUT_ROOT}/java/index.html"
+  echo "Contents of ${OUT_ROOT}:"
+  find "${OUT_ROOT}" -maxdepth 3 -type f | head -50
+  echo "Maven target apidocs (if any):"
+  find sdks/java/target -type f -name 'index.html' 2>/dev/null | head -20
+  exit 1
+fi
 
 echo "==> Python (pdoc) → ${OUT_ROOT}/python"
 if ! command -v python3 >/dev/null 2>&1; then
