@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notification Hub SDK docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --surface: #f8fafc;
+      --panel: #ffffff;
+      --line: #cbd5e1;
+      --teal: #0f766e;
+      --teal-deep: #115e59;
+      --teal-soft: #ccfbf1;
+      --slate: #1e293b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 12% -10%, rgba(13, 148, 136, 0.18), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(15, 23, 42, 0.08), transparent 50%),
+        linear-gradient(180deg, #eef2f7 0%, var(--surface) 42%, #e8eef5 100%);
+      line-height: 1.55;
+    }
+
+    .shell {
+      width: min(920px, calc(100% - 2.5rem));
+      margin: 0 auto;
+      padding: 3.5rem 0 4rem;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.85rem;
+    }
+
+    h1 {
+      margin: 0 0 0.65rem;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .lede {
+      margin: 0 0 2.25rem;
+      max-width: 36rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .langs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 0 0 2rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .langs a {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-height: 8.5rem;
+      padding: 1.25rem 1.35rem;
+      text-decoration: none;
+      color: inherit;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .langs a:hover,
+    .langs a:focus-visible {
+      transform: translateY(-3px);
+      border-color: #99f6e4;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+      outline: none;
+    }
+
+    .lang-name {
+      font-size: 1.2rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    .lang-tool {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.8rem;
+      color: var(--teal);
+    }
+
+    .lang-desc {
+      margin-top: auto;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .foot {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .foot a {
+      color: var(--teal);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.15em;
+    }
+
+    .foot a:hover {
+      color: var(--teal-deep);
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 1.5rem, 920px); padding-top: 2.25rem; }
+      .langs { grid-template-columns: 1fr; }
+      .langs a { min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">Notification Hub</p>
+    <h1>SDK reference docs</h1>
+    <p class="lede">Generated API reference for each language client. Pick a language to open its standalone docs site.</p>
+    <ul class="langs">
+      <li>
+        <a href="./typescript/">
+          <span class="lang-name">TypeScript</span>
+          <span class="lang-tool">TypeDoc</span>
+          <span class="lang-desc">Typed client for Node and the browser.</span>
+        </a>
+      </li>
+      <li>
+        <a href="./java/">
+          <span class="lang-name">Java</span>
+          <span class="lang-tool">Javadoc</span>
+          <span class="lang-desc">Maven-ready client with package docs.</span>
+        </a>
+      </li>
+      <li>
+        <a href="./python/">
+          <span class="lang-name">Python</span>
+          <span class="lang-tool">pdoc</span>
+          <span class="lang-desc">Idiomatic client for scripts and services.</span>
+        </a>
+      </li>
+    </ul>
+    <p class="foot">Source: <a href="https://github.com/sophias-hub/notification-hub-service/tree/main/sdks">sdks/</a> in notification-hub-service.</p>
+  </main>
+</body>
+</html>
