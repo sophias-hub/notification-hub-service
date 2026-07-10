@@ -37,12 +37,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.local/bin/vale
-          key: vale-3.9.5-${{ runner.os }}
+          key: vale-3.15.1-${{ runner.os }}
 
       - name: Install Vale
         if: steps.vale-cache.outputs.cache-hit != 'true'
         run: |
-          VALE_VERSION=3.9.5
+          VALE_VERSION=3.15.1
           curl -sfL -o vale.tar.gz \
             "https://github.com/vale-cli/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz"
           tar -xzf vale.tar.gz vale

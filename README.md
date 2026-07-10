@@ -86,5 +86,5 @@ On push to `main`, CI runs tests, builds docs, validates Markdown, and publishes
 
 API and SDK reference docs are generated from this repo in CI and published to separate GitHub Pages sites:
 
-- [API Reference](https://sophias-hub.github.io/docs-api/)—Endpoints, headers, request/response formats.
-- [SDK Guide](https://sophias-hub.github.io/docs-sdk/)—How to use the TypeScript client module.
+- [API Reference](https://sophias-hub.github.io/docs-api/): Endpoints, headers, request/response formats.
+- [SDK Guide](https://sophias-hub.github.io/docs-sdk/): How to use the TypeScript client module.
