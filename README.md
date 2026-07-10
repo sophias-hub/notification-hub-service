@@ -91,18 +91,4 @@ API and SDK reference docs are generated from this repo in CI and published to s
 
 ### Interactive Swagger (Try it out)
 
-Swagger UI calls a **public mock API** URL baked into the published site at build time.
-
-1. Deploy this service (for example with the included `render.yaml` on [Render](https://render.com)).
-2. In the GitHub repo **Settings → Secrets and variables → Actions → Variables**, add:
-   - `PUBLIC_API_URL` = your deployed API origin (for example `https://notification-hub-service.onrender.com`)
-3. Push to `main` so CI rebuilds and republishes docs.
-
-In Swagger UI, click **Authorize** and use API key `secure-token-123`.
-
-Local Try it out (API running on your machine):
-
-```bash
-PUBLIC_API_URL=http://localhost:3000 npm run docs:api:site
-open docs/api-site/index.html
-```
+The published Swagger UI sends Try it out requests to a public mock API. CI bakes that API origin into the site from the `PUBLIC_API_URL` repo variable. Authorize with API key `secure-token-123`.
