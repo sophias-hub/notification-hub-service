@@ -1,0 +1,15 @@
+# Deploy the mock Notification Hub API (for interactive Swagger Try it out).
+# https://render.com — connect this repo and use this Blueprint, or create a Web Service manually.
+
+services:
+  - type: web
+    name: notification-hub-service
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      # Render injects PORT automatically — do not hardcode it.
+      - key: NODE_VERSION
+        value: "24"

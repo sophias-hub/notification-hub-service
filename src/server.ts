@@ -41,6 +41,15 @@ const authenticateApiKey = (req: Request, res: Response, next: NextFunction): vo
 };
 
 /**
+ * @route   GET /health
+ * @desc    Liveness check for hosting platforms (no auth)
+ * @access  Public
+ */
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+/**
  * @route   GET /api/v1/templates
  * @desc    Returns an array of available mock notification templates
  * @access  Private (Requires X-API-Key)

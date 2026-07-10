@@ -86,5 +86,9 @@ On push to `main`, CI runs tests, builds docs, validates Markdown, and publishes
 
 API and SDK reference docs are generated from this repo in CI and published to separate GitHub Pages sites:
 
-- [API Reference](https://sophias-hub.github.io/docs-api/): Endpoints, headers, request/response formats.
+- [API Reference](https://sophias-hub.github.io/docs-api/): Endpoints, headers, request/response formats (Swagger Try it out).
 - [SDK Guide](https://sophias-hub.github.io/docs-sdk/): How to use the TypeScript client module.
+
+### Interactive Swagger (Try it out)
+
+The published Swagger UI sends Try it out requests to a public mock API. CI bakes that API origin into the site from the `PUBLIC_API_URL` repo variable. Authorize with API key `secure-token-123`.

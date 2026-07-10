@@ -13,6 +13,14 @@ afterAll((done) => {
 });
 
 describe('Notification Hub API Endpoints', () => {
+
+  describe('GET /health', () => {
+    it('should return 200 without authentication', async () => {
+      const res = await request(app).get('/health');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ status: 'ok' });
+    });
+  });
   
   describe('Authentication Middleware', () => {
     it('should return 401 Unauthorized if X-API-Key header is missing', async () => {

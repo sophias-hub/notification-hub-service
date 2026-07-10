@@ -93,7 +93,17 @@ jobs:
       - run: npm test
       - run: npx tsoa spec && npx swagger-cli validate docs/api/swagger.json
       - run: npm run docs:sdk
-      - run: npm run docs:api:site
+      - name: Build API docs site
+        env:
+          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+        run: |
+          if [ -z "${PUBLIC_API_URL}" ]; then
+            echo "::warning::PUBLIC_API_URL is not set. Swagger Try it out will target localhost."
+            echo "Add a repo Variable PUBLIC_API_URL (e.g. https://notification-hub-service.onrender.com) for interactive docs."
+          else
+            echo "Swagger Try it out target: ${PUBLIC_API_URL}"
+          fi
+          npm run docs:api:site
       - run: npm run docs:finalize
 
       - name: Upload SDK docs artifact
