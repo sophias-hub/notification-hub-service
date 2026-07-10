@@ -46,14 +46,10 @@ PYTHONPATH="sdks/python/src${PYTHONPATH:+:$PYTHONPATH}" \
 echo "==> SDK docs index → ${OUT_ROOT}/index.html"
 cp "${ROOT}/scripts/sdk-docs-index.html" "${OUT_ROOT}/index.html"
 
-# JDK 17 places addStylesheet CSS at the docs root; newer JDKs use resource-files/.
-# Keep both so the theme resolves regardless of the CI JDK.
-if [[ -f "${OUT_ROOT}/java/resource-files/modern-theme.css" && ! -f "${OUT_ROOT}/java/modern-theme.css" ]]; then
-  cp "${OUT_ROOT}/java/resource-files/modern-theme.css" "${OUT_ROOT}/java/modern-theme.css"
-fi
-if [[ -f "${OUT_ROOT}/java/modern-theme.css" && ! -f "${OUT_ROOT}/java/resource-files/modern-theme.css" ]]; then
-  mkdir -p "${OUT_ROOT}/java/resource-files"
-  cp "${OUT_ROOT}/java/modern-theme.css" "${OUT_ROOT}/java/resource-files/modern-theme.css"
-fi
+echo "==> Apply Java Javadoc theme (bake into stylesheet.css)"
+chmod +x "${ROOT}/scripts/apply-java-javadoc-theme.sh"
+"${ROOT}/scripts/apply-java-javadoc-theme.sh" \
+  "${OUT_ROOT}/java" \
+  "${ROOT}/sdks/java/src/main/javadoc/modern-theme.css"
 
 echo "SDK docs built under ${OUT_ROOT}/"

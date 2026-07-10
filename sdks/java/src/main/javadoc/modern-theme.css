@@ -161,8 +161,14 @@ div.header {
 }
 
 .caption {
+  background-color: transparent !important;
+  color: #0f172a !important;
+}
+
+.caption span {
   background-color: #0d9488 !important;
   color: #ffffff !important;
+  border: none !important;
 }
 
 .caption a:link,
@@ -173,6 +179,21 @@ div.header {
 .caption a:hover,
 .caption a:active {
   color: #ffffff !important;
+}
+
+div.table-tabs > button.active-table-tab {
+  background: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+div.table-tabs > button.table-tab {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.ui-autocomplete-category {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
 }
 
 .table-header {
