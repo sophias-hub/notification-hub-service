@@ -1,4 +1,4 @@
-The **Notification Hub SDK** provides a type-safe client for integrating central notifications into your backend applications. It streamlines delivery tracking and asset rendering for email, SMS, and push notifications.
+The **Notification Hub SDK** provides a type-safe client for integrating central notifications into your server applications. It streamlines delivery tracking and asset rendering for email, SMS, and push notifications.
 
 ## Installation
 

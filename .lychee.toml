@@ -1,0 +1,14 @@
+# Link checker for Markdown docs in this repo.
+exclude_path = [
+  ".git",
+  "node_modules",
+  "docs/sdk",
+  "docs/api-site",
+  "build",
+]
+
+# Local dev URLs are expected in examples; skip network checks for them.
+exclude = [
+  '^http://localhost',
+  '^https://localhost',
+]
