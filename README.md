@@ -86,5 +86,23 @@ On push to `main`, CI runs tests, builds docs, validates Markdown, and publishes
 
 API and SDK reference docs are generated from this repo in CI and published to separate GitHub Pages sites:
 
-- [API Reference](https://sophias-hub.github.io/docs-api/): Endpoints, headers, request/response formats.
+- [API Reference](https://sophias-hub.github.io/docs-api/): Endpoints, headers, request/response formats (Swagger Try it out).
 - [SDK Guide](https://sophias-hub.github.io/docs-sdk/): How to use the TypeScript client module.
+
+### Interactive Swagger (Try it out)
+
+Swagger UI calls a **public mock API** URL baked into the published site at build time.
+
+1. Deploy this service (for example with the included `render.yaml` on [Render](https://render.com)).
+2. In the GitHub repo **Settings → Secrets and variables → Actions → Variables**, add:
+   - `PUBLIC_API_URL` = your deployed API origin (for example `https://notification-hub-service.onrender.com`)
+3. Push to `main` so CI rebuilds and republishes docs.
+
+In Swagger UI, click **Authorize** and use API key `secure-token-123`.
+
+Local Try it out (API running on your machine):
+
+```bash
+PUBLIC_API_URL=http://localhost:3000 npm run docs:api:site
+open docs/api-site/index.html
+```

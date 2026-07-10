@@ -17,7 +17,7 @@
   "scriptsComments": {
     "docs:sdk": "Generate TypeDoc SDK reference into docs/sdk/",
     "docs:api": "Generate OpenAPI spec and run local Swagger UI at http://localhost:8080/docs",
-    "docs:api:site": "Generate OpenAPI spec and build static Swagger UI site into docs/api-site/ for docs-api publish",
+    "docs:api:site": "Generate OpenAPI spec and build static Swagger UI into docs/api-site/ (set PUBLIC_API_URL for Try it out)",
     "docs:finalize": "Generate meta.json and inject provenance banners into docs/sdk and docs/api-site",
     "validate": "Lint Markdown prose (Vale) and check links (Lychee)"
   },
