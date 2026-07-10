@@ -1,11 +1,12 @@
 /*
  * Modern theme overlay for Notification Hub Java SDK docs.
- * Loaded with --add-stylesheet on top of the JDK default stylesheet.
+ *
+ * CI builds with JDK 17 (hardcoded colors). Local/newer JDKs use CSS variables.
+ * This file covers both: :root vars for modern doclets + explicit selectors for JDK 17.
  */
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
 :root {
-  /* Typography */
   --body-font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --block-font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --code-font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -15,12 +16,10 @@
   --nav-font-size: 13.5px;
   --block-line-height: 1.6;
 
-  /* Layout */
   --top-nav-height: 52px;
   --sub-nav-height: 40px;
   --max-content-width: 1100px;
 
-  /* Surfaces — cool slate, not the default blue/orange Javadoc look */
   --body-text-color: #0f172a;
   --block-text-color: #1e293b;
   --body-background-color: #f8fafc;
@@ -70,53 +69,182 @@
   --copy-button-background-color-active: rgba(13, 148, 136, 0.2);
 }
 
-/* Soften chrome and tighten the reading column */
+/* —— JDK 17+ classic doclet (hardcoded colors) —— */
+
 body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-size: 15px !important;
   letter-spacing: 0.01em;
-}
-
-.top-nav,
-.topNav {
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.12);
-}
-
-main,
-.main-content,
-.contentContainer,
-.flex-content {
-  border-radius: 0;
-}
-
-div.header h1.title,
-h1.title,
-.title {
-  letter-spacing: -0.02em;
-  font-weight: 650;
 }
 
 a:link,
 a:visited {
+  color: #0f766e !important;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
+a[href]:hover,
+a[href]:focus,
+a:hover,
+a:active {
+  color: #115e59 !important;
+}
+
+a[name] {
+  color: #0f172a !important;
+}
+
+pre,
+code,
+tt,
 .member-signature,
-.memberSignature,
+button {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+}
+
 pre,
 .code,
-.code-block {
+.code-block,
+.member-signature {
   border-radius: 8px;
+}
+
+.top-nav {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.top-nav a:link,
+.top-nav a:active,
+.top-nav a:visited {
+  color: #f8fafc !important;
+}
+
+.top-nav a:hover {
+  color: #99f6e4 !important;
+}
+
+.nav-bar-cell1-rev {
+  background-color: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+.sub-nav {
+  background-color: #e2e8f0 !important;
+}
+
+.sub-nav a:link,
+.sub-nav a:visited {
+  color: #0f766e !important;
+}
+
+.sub-nav a:hover {
+  color: #115e59 !important;
+}
+
+.title,
+div.header h1.title,
+h1.title {
+  color: #0f172a !important;
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
+
+.header ul li,
+.footer ul li,
+div.header {
+  color: #1e293b !important;
+}
+
+.caption {
+  background-color: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+.caption a:link,
+.caption a:visited {
+  color: #ccfbf1 !important;
+}
+
+.caption a:hover,
+.caption a:active {
+  color: #ffffff !important;
+}
+
+.table-header {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.even-row-color,
+.even-row-color .table-header {
+  background-color: #ffffff !important;
+}
+
+.odd-row-color,
+.odd-row-color .table-header {
+  background-color: #f1f5f9 !important;
+}
+
+.summary-table,
+.details-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.col-first a:link,
+.col-first a:visited,
+.col-second a:link,
+.col-second a:visited {
+  color: #0f766e !important;
+}
+
+.inherited-list h3,
+.inherited-list h2,
+.summary h2,
+.summary h3,
+.details h2,
+.details h3,
+section[class$="-details"] h2,
+section[class$="-summary"] h2 {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.block,
+.contentContainer,
+.descfrm-type-label,
+.notes {
+  color: #1e293b !important;
+}
+
+.ui-autocomplete,
+.ui-widget-content {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+.ui-state-active,
+.ui-widget-content .ui-state-active {
+  background: #0d9488 !important;
+  border-color: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+/* Search / highlight remnants from classic blue accents */
+.highlight,
+.ui-state-highlight {
+  background-color: #ccfbf1 !important;
+  color: #0f172a !important;
 }
 
 table {
   border-collapse: separate;
   border-spacing: 0;
   overflow: hidden;
-  border-radius: 8px;
-}
-
-.summary-table,
-.details-table,
-.caption {
   border-radius: 8px;
 }
