@@ -56,5 +56,5 @@ Use `tsx` to execute TypeScript files instantly without a manual compilation ste
 npm install --save-dev tsx
 
 # Run your script
-npx tsx src/sdk/test-client.ts
+npx tsx sdks/typescript/test-client.ts
 ```
