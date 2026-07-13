@@ -231,6 +231,40 @@ docker-compose up --build
 7. Work on a feature branch / `working-branch`; open PRs—avoid silent pushes to `main`.
 8. After API shape changes, regenerate and validate OpenAPI before finishing.
 9. Guide prose lives in the **`docs`** repo; this repo owns contracts + SDK reference generation.
+10. Author Markdown to Vale + Lychee standards (see below). Run `npm run validate` (or the `validate-and-fix` skill) before commit or push; fix failures—don't skip checks.
+
+---
+
+## Markdown (Vale + Lychee)
+
+Human-authored `*.md` in this repo must pass `npm run validate` (CI runs the same). Generated trees `docs/sdk/` and `docs/api-site/` are excluded.
+
+### Vale (Microsoft style on `*.md`)
+
+Config: `.vale.ini` (`BasedOnStyles = Microsoft`, `MinAlertLevel = error`). Disabled here: `HeadingAcronyms`, `GeneralURL`, `Terms`, `FirstPerson`.
+
+When writing or editing Markdown:
+
+- Prefer contractions (`don't`, `aren't`, `doesn't`) over expanded forms.
+- Em dashes with **no** spaces: `word—word` (not `word — word`).
+- Prefer plain English over Latin abbreviations—write "for example," not "e.g."
+- Apply Vale's suggested wording when it reports an error; keep meaning.
+
+### Lychee (links)
+
+Config: `.lychee.toml`. All Markdown links must resolve unless excluded there.
+
+- Prefer fixing broken URLs in source over adding excludes.
+- Localhost example URLs are already excluded; don't add broad excludes to hide real failures.
+- Language SDK Pages paths under `docs-sdk/{typescript,java,python}/` are excluded until first publish—don't "fix" those by inventing live pages.
+
+### Before finishing Markdown work
+
+```bash
+npm run validate
+```
+
+Or invoke the project skill `.cursor/skills/validate-and-fix/` to run validate, apply fixes, and re-run until clean.
 
 ---
 

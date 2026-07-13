@@ -10,7 +10,7 @@ description: >-
 # Validate and fix (notification-hub-service)
 
 Close the CI validation loop locally before commit or push. Use this repo’s
-existing `npm run validate` only—do not invent a parallel validator.
+existing `npm run validate` only—don't invent a parallel validator.
 
 **Scope:** Markdown under this repo (`scripts/validate.sh`). Vale skips
 `node_modules/`, `docs/sdk/`, and `docs/api-site/`.
@@ -41,11 +41,11 @@ Validate Progress:
 
 Typical line: `path:line:col  error  message  Rule.Name`
 
-- Apply the rule’s suggested wording when present (e.g. contractions, dash spacing).
+- Apply the rule’s suggested wording when present (for example contractions, dash spacing).
 - Keep meaning; change only what the rule requires.
 - Common Microsoft rules:
-  - `Microsoft.Dashes` — em dash with **no** spaces: `word—word`
-  - `Microsoft.Contractions` — prefer `don't`, `aren't`, `doesn't`, etc.
+  - `Microsoft.Dashes`—em dash with **no** spaces: `word—word`
+  - `Microsoft.Contractions`—prefer `don't`, `aren't`, `doesn't`, etc.
 - Fix every reported location in the cycle when safe; then re-run.
 
 ### Lychee
@@ -55,11 +55,12 @@ Typical line: `path:line:col  error  message  Rule.Name`
 
 ### Missing tools
 
-If validate exits because `vale` or `lychee` is missing, print the install hint from the script output (typically `brew install vale`, `brew install lychee`). Do not invent a custom installer or skip validation.
+If validate exits because `vale` or `lychee` is missing, print the install hint from the script output (typically `brew install vale`, `brew install lychee`). Don't invent a custom installer or skip validation.
 
 ## Hard rules
 
 - Prefer Vale’s suggested wording over paraphrasing.
-- Do not silence failures (no deleting checks, no `--no-verify`, no weakening CI).
-- Do not edit generated trees (`docs/sdk/`, `docs/api-site/`) to “pass” lint.
-- Do not add a new validate script; call `npm run validate` only.
+- Don't silence failures (no deleting checks, no `--no-verify`, no weakening CI).
+- Don't edit generated trees (`docs/sdk/`, `docs/api-site/`) to “pass” lint.
+- Don't add a new validate script; call `npm run validate` only.
+- Don't run the Antora `docs` repo validate from this skill.
