@@ -34,7 +34,7 @@ NotificationResponse response = client.sendNotification(
     Map.of("name", "Sophia")
 );
 
-System.out.println(response.getMessageId());
+System.out.println(response.getRecordId());
 ```
 
 ## Smoke example

@@ -1,166 +1,308 @@
 /**
- * Represents the notification template structure.
+ * Channel for which a notification is intended.
+ */
+export type Channel = 'email' | 'sms' | 'push';
+
+/**
+ * Delivery status for a send record.
+ */
+export type RecordStatus = 'queued' | 'delivered' | 'failed';
+
+/**
+ * Notification template.
  */
 export interface NotificationTemplate {
-  /**
-   * Human-readable template ID.
-   *
-   * @example 'welcome-email'
-   */
+  /** Human-readable template ID. @example 'welcome-email' */
   id: string;
-
-  /**
-   * A descriptive, human-readable template name.
-   *
-   * @example 'Welcome Email Template'
-   */
+  /** Descriptive template name. @example 'Welcome Email Template' */
   name: string;
-
-  /**
-   * Channel for which the notification template is intended.\
-   * Must be exactly 'email', 'sms', or 'push'.
-   *
-   * @example 'email'
-   */
-  channel: 'email' | 'sms' | 'push';
+  /** Channel: 'email' | 'sms' | 'push'. */
+  channel: Channel;
+  /** Optional email subject. */
+  subject?: string;
+  /** Optional body with {{placeholders}}. */
+  body?: string;
 }
 
 /**
- * Represents the successful API response metadata.
+ * Successful send response.
  */
 export interface NotificationResponse {
-  /**
-   * Status message.
-   *
-   * @example 'success'
-   */
   status: string;
-
-  /**
-   * Response message ID.
-   *
-   * @example 'msg-e45dyfoas'
-   */
-  messageId: string;
-
-  /**
-   * Notification processing timestamp (UTC ISO-8601).
-   *
-   * @example '2026-07-07T16:55:07.816Z'
-   */
+  recordId: string;
   processedAt: string;
 }
 
 /**
- * Core client class for integrating, authenticating, and interacting with the central Notification Hub service.
- * 
+ * Stored delivery record for a send.
+ */
+export interface DeliveryRecord {
+  recordId: string;
+  recipient: string;
+  channel: Channel;
+  templateId: string;
+  status: RecordStatus;
+  processedAt: string;
+  templateData?: Record<string, unknown>;
+}
+
+/**
+ * Channel opt-in preferences for a recipient.
+ */
+export interface Preferences {
+  recipient: string;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+}
+
+/**
+ * Registered webhook.
+ */
+export interface Webhook {
+  id: string;
+  url: string;
+  events: string[];
+  createdAt: string;
+}
+
+/**
+ * Fake webhook delivery attempt.
+ */
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  recordId: string;
+  status: 'delivered' | 'failed';
+  attemptedAt: string;
+}
+
+/**
+ * HTTP client for the Notification Hub API.
+ *
  * @example
  * ```typescript
  * const client = new NotificationClient('secure-token-123', 'http://localhost:3000');
+ * const template = await client.createTemplate({
+ *   id: 'onboarding-email',
+ *   name: 'Onboarding',
+ *   channel: 'email',
+ * });
  * ```
  */
 export class NotificationClient {
-  /**
-   * Authorization key used to authenticate API requests.
-   * @private
-   */
   private apiKey: string;
-
-  /**
-   * Target base URL of the running notification service instance.
-   * @private
-   */
   private baseUrl: string;
 
   /**
-   * Creates an instance of the NotificationClient to manage service connections.
-   * 
-   * @param apiKey - The secret authorization token passed to the server via the `X-API-Key` header.
-   * @param baseUrl - The target URL of the running notification service.
+   * @param apiKey - Secret passed via the `X-API-Key` header.
+   * @param baseUrl - Base URL of the notification service.
    */
   constructor(apiKey: string, baseUrl: string = 'http://localhost:3000') {
     this.apiKey = apiKey;
-    this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash if present
+    this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
-  /**
-   * Fetches all available (mocked) notification templates.
-   * 
-   * @returns An array of {@link NotificationTemplate} objects.
-   */
+  /** List all templates. */
   async getTemplates(): Promise<NotificationTemplate[]> {
-    const response = await fetch(`${this.baseUrl}/api/v1/templates`, {
-      method: 'GET',
-      headers: {
-        'X-API-Key': this.apiKey,
-        'Accept': 'application/json',
-      },
-    });
+    return this.request<NotificationTemplate[]>('GET', '/api/v1/templates');
+  }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to fetch templates: ${response.status} - ${errorData.message || response.statusText}`);
-    }
+  /** Retrieve one template by id. */
+  async getTemplate(id: string): Promise<NotificationTemplate> {
+    return this.request<NotificationTemplate>('GET', `/api/v1/templates/${encodeURIComponent(id)}`);
+  }
 
-    return response.json() as Promise<NotificationTemplate[]>;
+  /** Create a template. */
+  async createTemplate(template: NotificationTemplate): Promise<NotificationTemplate> {
+    return this.request<NotificationTemplate>('POST', '/api/v1/templates', template);
+  }
+
+  /** Replace a template. */
+  async updateTemplate(
+    id: string,
+    body: Omit<NotificationTemplate, 'id'>
+  ): Promise<NotificationTemplate> {
+    return this.request<NotificationTemplate>(
+      'PUT',
+      `/api/v1/templates/${encodeURIComponent(id)}`,
+      body
+    );
+  }
+
+  /** Partially update a template. */
+  async patchTemplate(
+    id: string,
+    patch: Partial<Omit<NotificationTemplate, 'id'>>
+  ): Promise<NotificationTemplate> {
+    return this.request<NotificationTemplate>(
+      'PATCH',
+      `/api/v1/templates/${encodeURIComponent(id)}`,
+      patch
+    );
+  }
+
+  /** Delete a template. */
+  async deleteTemplate(id: string): Promise<void> {
+    await this.request<void>('DELETE', `/api/v1/templates/${encodeURIComponent(id)}`);
   }
 
   /**
-   * Dispatches a single template-driven notification to a specified recipient over a designated channel.
-   * 
-   * @param recipient - The destination address for the message (e.g., an email address, phone number, or device push token).
-   * @param channel - The transmission vector to use ('email', 'sms', or 'push').
-   * @param templateId - The unique system identifier of the template to render.
-   * @param templateData - Key-value metadata mappings used to interpolate variable placeholders inside the template.
-   * 
-   * @returns The {@link NotificationResponse} object with transaction tracking parameters.
+   * Send a template-driven notification.
    */
   async sendNotification(
     recipient: string,
-    channel: 'email' | 'sms' | 'push',
+    channel: Channel,
     templateId: string,
-    templateData: Record<string, any> = {}
+    templateData: Record<string, unknown> = {}
   ): Promise<NotificationResponse> {
-    const payload = {
+    return this.request<NotificationResponse>('POST', '/api/v1/send', {
       recipient,
       channel,
       templateId,
       templateData,
-    };
-
-    const response = await fetch(`${this.baseUrl}/api/v1/send`, {
-      method: 'POST',
-      headers: {
-        'X-API-Key': this.apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(payload),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to send notification: ${response.status} - ${errorData.message || response.statusText}`);
-    }
-
-    return response.json() as Promise<NotificationResponse>;
   }
 
   /**
-   * Sends a simple raw string payload directly to a channel.
-   * @deprecated Use {@link sendNotification} instead to send template-backed messages.
-   * 
-   * @param recipient - The destination address for the text string.
-   * @param channel - The transmission vector to use ('email', 'sms', or 'push').
-   * @param rawMessage - The unformatted string payload body.
-   * 
-   * @returns A {@link NotificationResponse} object.
+   * @deprecated Use {@link sendNotification} instead.
    */
   async send(
     recipient: string,
-    channel: 'email' | 'sms' | 'push',
+    channel: Channel,
     rawMessage: string
   ): Promise<NotificationResponse> {
     return this.sendNotification(recipient, channel, 'legacy-raw-template', { body: rawMessage });
+  }
+
+  /** Retrieve a delivery record by id. */
+  async getRecord(recordId: string): Promise<DeliveryRecord> {
+    return this.request<DeliveryRecord>(
+      'GET',
+      `/api/v1/records/${encodeURIComponent(recordId)}`
+    );
+  }
+
+  /** List delivery records, optionally filtered. */
+  async listRecords(filters?: {
+    recipient?: string;
+    status?: RecordStatus;
+  }): Promise<DeliveryRecord[]> {
+    const params = new URLSearchParams();
+    if (filters?.recipient) params.set('recipient', filters.recipient);
+    if (filters?.status) params.set('status', filters.status);
+    const qs = params.toString();
+    return this.request<DeliveryRecord[]>('GET', `/api/v1/records${qs ? `?${qs}` : ''}`);
+  }
+
+  /** Delete a delivery record. */
+  async deleteRecord(recordId: string): Promise<void> {
+    await this.request<void>('DELETE', `/api/v1/records/${encodeURIComponent(recordId)}`);
+  }
+
+  /** Get preferences for a recipient (defaults if unset). */
+  async getPreferences(recipient: string): Promise<Preferences> {
+    return this.request<Preferences>(
+      'GET',
+      `/api/v1/preferences/${encodeURIComponent(recipient)}`
+    );
+  }
+
+  /** Replace preferences. */
+  async setPreferences(
+    recipient: string,
+    prefs: { email: boolean; sms: boolean; push: boolean }
+  ): Promise<Preferences> {
+    return this.request<Preferences>(
+      'PUT',
+      `/api/v1/preferences/${encodeURIComponent(recipient)}`,
+      prefs
+    );
+  }
+
+  /** Partially update preferences. */
+  async patchPreferences(
+    recipient: string,
+    patch: Partial<{ email: boolean; sms: boolean; push: boolean }>
+  ): Promise<Preferences> {
+    return this.request<Preferences>(
+      'PATCH',
+      `/api/v1/preferences/${encodeURIComponent(recipient)}`,
+      patch
+    );
+  }
+
+  /** Reset preferences to defaults. */
+  async resetPreferences(recipient: string): Promise<Preferences> {
+    return this.request<Preferences>(
+      'DELETE',
+      `/api/v1/preferences/${encodeURIComponent(recipient)}`
+    );
+  }
+
+  /** Opt out of a single channel. */
+  async unsubscribe(recipient: string, channel: Channel): Promise<Preferences> {
+    return this.request<Preferences>('POST', '/api/v1/unsubscribe', { recipient, channel });
+  }
+
+  /** Register a webhook. */
+  async createWebhook(url: string, events?: string[]): Promise<Webhook> {
+    return this.request<Webhook>('POST', '/api/v1/webhooks', { url, events });
+  }
+
+  /** List webhooks. */
+  async listWebhooks(): Promise<Webhook[]> {
+    return this.request<Webhook[]>('GET', '/api/v1/webhooks');
+  }
+
+  /** Get a webhook by id. */
+  async getWebhook(id: string): Promise<Webhook> {
+    return this.request<Webhook>('GET', `/api/v1/webhooks/${encodeURIComponent(id)}`);
+  }
+
+  /** Delete a webhook. */
+  async deleteWebhook(id: string): Promise<void> {
+    await this.request<void>('DELETE', `/api/v1/webhooks/${encodeURIComponent(id)}`);
+  }
+
+  /** List webhook delivery attempts. */
+  async listWebhookDeliveries(): Promise<WebhookDelivery[]> {
+    return this.request<WebhookDelivery[]>('GET', '/api/v1/webhooks/deliveries');
+  }
+
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown
+  ): Promise<T> {
+    const headers: Record<string, string> = {
+      'X-API-Key': this.apiKey,
+      Accept: 'application/json',
+    };
+    const init: RequestInit = { method, headers };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${this.baseUrl}${path}`, init);
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    if (!response.ok) {
+      const errorData = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        code?: string;
+      };
+      const detail = errorData.code
+        ? `${errorData.code}: ${errorData.message || response.statusText}`
+        : errorData.message || response.statusText;
+      throw new Error(`Request failed (${method} ${path}): ${response.status} - ${detail}`);
+    }
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return undefined as T;
+    }
+    const text = await response.text();
+    return (text ? JSON.parse(text) : undefined) as T;
   }
 }

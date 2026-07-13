@@ -45,6 +45,53 @@ PYTHONPATH="sdks/python/src${PYTHONPATH:+:$PYTHONPATH}" \
 
 echo "==> SDK docs index → ${OUT_ROOT}/index.html"
 cp "${ROOT}/scripts/sdk-docs-index.html" "${OUT_ROOT}/index.html"
+cp "${ROOT}/docs/brand/favicon.png" "${OUT_ROOT}/favicon.png"
+cp "${ROOT}/docs/brand/favicon.svg" "${OUT_ROOT}/favicon.svg"
+# Also place favicons in language subdirs for deep links.
+for lang in typescript java python; do
+  if [[ -d "${OUT_ROOT}/${lang}" ]]; then
+    cp "${ROOT}/docs/brand/favicon.png" "${OUT_ROOT}/${lang}/favicon.png"
+    cp "${ROOT}/docs/brand/favicon.svg" "${OUT_ROOT}/${lang}/favicon.svg"
+  fi
+done
+
+# Brand language SDK pages (titles + favicons). Favicons are copied above.
+brand_sdk_html() {
+  local lang="$1"
+  local title="$2"
+  local dir="${OUT_ROOT}/${lang}"
+  [[ -d "$dir" ]] || return 0
+  echo "==> Brand ${lang} SDK page titles + favicon"
+  TITLE="$title" DIR="$dir" python3 - <<'PY'
+from pathlib import Path
+import os
+import re
+
+root = Path(os.environ["DIR"])
+title = os.environ["TITLE"]
+for html in root.rglob("*.html"):
+    text = html.read_text(encoding="utf-8", errors="ignore")
+    orig = text
+    depth = len(html.relative_to(root).parts) - 1
+    prefix = "../" * depth if depth > 0 else "./"
+    icon = (
+        f'<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml">\n'
+        f'<link rel="alternate icon" href="{prefix}favicon.png" type="image/png">'
+    )
+    if re.search(r"<title>[^<]*</title>", text, flags=re.I):
+        text = re.sub(r"<title>[^<]*</title>", f"<title>{title}</title>", text, count=1, flags=re.I)
+    elif re.search(r"<head[^>]*>", text, flags=re.I):
+        text = re.sub(r"(<head[^>]*>)", rf"\1\n<title>{title}</title>", text, count=1, flags=re.I)
+    if 'rel="icon"' not in text and re.search(r"<head[^>]*>", text, flags=re.I):
+        text = re.sub(r"(<head[^>]*>)", rf"\1\n{icon}", text, count=1, flags=re.I)
+    if text != orig:
+        html.write_text(text, encoding="utf-8")
+PY
+}
+
+brand_sdk_html typescript "TypeScript SDK Docs | Notification Hub Service"
+brand_sdk_html java "Java SDK Docs | Notification Hub Service"
+brand_sdk_html python "Python SDK Docs | Notification Hub Service"
 
 echo "==> Apply Java Javadoc theme (bake into stylesheet.css)"
 chmod +x "${ROOT}/scripts/apply-java-javadoc-theme.sh"

@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -43,30 +45,37 @@ public class NotificationClient {
         .build();
   }
 
-  /**
-   * Fetches all available notification templates.
-   */
+  /** Fetches all available notification templates. */
   public List<NotificationTemplate> getTemplates() {
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(baseUrl + "/api/v1/templates"))
-        .timeout(Duration.ofSeconds(30))
-        .header("X-API-Key", apiKey)
-        .header("Accept", "application/json")
-        .GET()
-        .build();
-
-    HttpResponse<String> response = send(request);
-    ensureOk(response, "Failed to fetch templates");
-    try {
-      return MAPPER.readValue(response.body(), new TypeReference<List<NotificationTemplate>>() {});
-    } catch (IOException e) {
-      throw new NotificationHubException("Failed to parse templates response: " + e.getMessage(), response.statusCode());
-    }
+    return readList(request("GET", "/api/v1/templates", null), new TypeReference<>() {}, "Failed to fetch templates");
   }
 
-  /**
-   * Sends a template-driven notification.
-   */
+  /** Retrieve one template by id. */
+  public NotificationTemplate getTemplate(String id) {
+    return read(request("GET", "/api/v1/templates/" + enc(id), null), NotificationTemplate.class, "Failed to get template");
+  }
+
+  /** Create a template. */
+  public NotificationTemplate createTemplate(NotificationTemplate template) {
+    return read(request("POST", "/api/v1/templates", template), NotificationTemplate.class, "Failed to create template");
+  }
+
+  /** Replace a template. */
+  public NotificationTemplate updateTemplate(String id, Map<String, Object> body) {
+    return read(request("PUT", "/api/v1/templates/" + enc(id), body), NotificationTemplate.class, "Failed to update template");
+  }
+
+  /** Partially update a template. */
+  public NotificationTemplate patchTemplate(String id, Map<String, Object> patch) {
+    return read(request("PATCH", "/api/v1/templates/" + enc(id), patch), NotificationTemplate.class, "Failed to patch template");
+  }
+
+  /** Delete a template. */
+  public void deleteTemplate(String id) {
+    ensureOk(request("DELETE", "/api/v1/templates/" + enc(id), null), "Failed to delete template");
+  }
+
+  /** Sends a template-driven notification. */
   public NotificationResponse sendNotification(
       String recipient,
       String channel,
@@ -78,30 +87,7 @@ public class NotificationClient {
     payload.put("channel", channel);
     payload.put("templateId", templateId);
     payload.put("templateData", templateData == null ? Map.of() : templateData);
-
-    String body;
-    try {
-      body = MAPPER.writeValueAsString(payload);
-    } catch (IOException e) {
-      throw new NotificationHubException("Failed to serialize send payload: " + e.getMessage(), 0);
-    }
-
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(baseUrl + "/api/v1/send"))
-        .timeout(Duration.ofSeconds(30))
-        .header("X-API-Key", apiKey)
-        .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
-        .POST(HttpRequest.BodyPublishers.ofString(body))
-        .build();
-
-    HttpResponse<String> response = send(request);
-    ensureOk(response, "Failed to send notification");
-    try {
-      return MAPPER.readValue(response.body(), NotificationResponse.class);
-    } catch (IOException e) {
-      throw new NotificationHubException("Failed to parse send response: " + e.getMessage(), response.statusCode());
-    }
+    return read(request("POST", "/api/v1/send", payload), NotificationResponse.class, "Failed to send notification");
   }
 
   /**
@@ -110,6 +96,117 @@ public class NotificationClient {
   @Deprecated
   public NotificationResponse send(String recipient, String channel, String rawMessage) {
     return sendNotification(recipient, channel, "legacy-raw-template", Map.of("body", rawMessage));
+  }
+
+  /** Retrieve a delivery record by id. */
+  public DeliveryRecord getRecord(String recordId) {
+    return read(request("GET", "/api/v1/records/" + enc(recordId), null), DeliveryRecord.class, "Failed to get record");
+  }
+
+  /** List delivery records with optional filters. */
+  public List<DeliveryRecord> listRecords(String recipient, String status) {
+    StringBuilder path = new StringBuilder("/api/v1/records");
+    boolean first = true;
+    if (recipient != null && !recipient.isBlank()) {
+      path.append(first ? "?" : "&").append("recipient=").append(enc(recipient));
+      first = false;
+    }
+    if (status != null && !status.isBlank()) {
+      path.append(first ? "?" : "&").append("status=").append(enc(status));
+    }
+    return readList(request("GET", path.toString(), null), new TypeReference<>() {}, "Failed to list records");
+  }
+
+  /** Delete a delivery record. */
+  public void deleteRecord(String recordId) {
+    ensureOk(request("DELETE", "/api/v1/records/" + enc(recordId), null), "Failed to delete record");
+  }
+
+  /** Get preferences for a recipient. */
+  public Preferences getPreferences(String recipient) {
+    return read(request("GET", "/api/v1/preferences/" + enc(recipient), null), Preferences.class, "Failed to get preferences");
+  }
+
+  /** Replace preferences. */
+  public Preferences setPreferences(String recipient, boolean email, boolean sms, boolean push) {
+    Map<String, Object> body = Map.of("email", email, "sms", sms, "push", push);
+    return read(request("PUT", "/api/v1/preferences/" + enc(recipient), body), Preferences.class, "Failed to set preferences");
+  }
+
+  /** Partially update preferences. */
+  public Preferences patchPreferences(String recipient, Map<String, Boolean> patch) {
+    return read(request("PATCH", "/api/v1/preferences/" + enc(recipient), patch), Preferences.class, "Failed to patch preferences");
+  }
+
+  /** Reset preferences to defaults. */
+  public Preferences resetPreferences(String recipient) {
+    return read(request("DELETE", "/api/v1/preferences/" + enc(recipient), null), Preferences.class, "Failed to reset preferences");
+  }
+
+  /** Opt out of a single channel. */
+  public Preferences unsubscribe(String recipient, String channel) {
+    return read(
+        request("POST", "/api/v1/unsubscribe", Map.of("recipient", recipient, "channel", channel)),
+        Preferences.class,
+        "Failed to unsubscribe"
+    );
+  }
+
+  /** Register a webhook. */
+  public Webhook createWebhook(String url, List<String> events) {
+    Map<String, Object> body = new HashMap<>();
+    body.put("url", url);
+    if (events != null) {
+      body.put("events", events);
+    }
+    return read(request("POST", "/api/v1/webhooks", body), Webhook.class, "Failed to create webhook");
+  }
+
+  /** List webhooks. */
+  public List<Webhook> listWebhooks() {
+    return readList(request("GET", "/api/v1/webhooks", null), new TypeReference<>() {}, "Failed to list webhooks");
+  }
+
+  /** Get a webhook by id. */
+  public Webhook getWebhook(String id) {
+    return read(request("GET", "/api/v1/webhooks/" + enc(id), null), Webhook.class, "Failed to get webhook");
+  }
+
+  /** Delete a webhook. */
+  public void deleteWebhook(String id) {
+    ensureOk(request("DELETE", "/api/v1/webhooks/" + enc(id), null), "Failed to delete webhook");
+  }
+
+  /** List webhook delivery attempts. */
+  public List<WebhookDelivery> listWebhookDeliveries() {
+    return readList(request("GET", "/api/v1/webhooks/deliveries", null), new TypeReference<>() {}, "Failed to list deliveries");
+  }
+
+  private HttpResponse<String> request(String method, String path, Object body) {
+    HttpRequest.Builder builder = HttpRequest.newBuilder()
+        .uri(URI.create(baseUrl + path))
+        .timeout(Duration.ofSeconds(30))
+        .header("X-API-Key", apiKey)
+        .header("Accept", "application/json");
+
+    if (body != null) {
+      String json;
+      try {
+        json = MAPPER.writeValueAsString(body);
+      } catch (IOException e) {
+        throw new NotificationHubException("Failed to serialize payload: " + e.getMessage(), 0);
+      }
+      builder.header("Content-Type", "application/json");
+      builder.method(method, HttpRequest.BodyPublishers.ofString(json));
+    } else if ("DELETE".equals(method)) {
+      builder.DELETE();
+    } else if ("GET".equals(method)) {
+      builder.GET();
+    } else {
+      builder.method(method, HttpRequest.BodyPublishers.noBody());
+    }
+
+    return send(builder.build());
   }
 
   private HttpResponse<String> send(HttpRequest request) {
@@ -123,6 +220,27 @@ public class NotificationClient {
     }
   }
 
+  private <T> T read(HttpResponse<String> response, Class<T> type, String prefix) {
+    ensureOk(response, prefix);
+    if (response.body() == null || response.body().isBlank()) {
+      return null;
+    }
+    try {
+      return MAPPER.readValue(response.body(), type);
+    } catch (IOException e) {
+      throw new NotificationHubException(prefix + " (parse): " + e.getMessage(), response.statusCode());
+    }
+  }
+
+  private <T> List<T> readList(HttpResponse<String> response, TypeReference<List<T>> type, String prefix) {
+    ensureOk(response, prefix);
+    try {
+      return MAPPER.readValue(response.body(), type);
+    } catch (IOException e) {
+      throw new NotificationHubException(prefix + " (parse): " + e.getMessage(), response.statusCode());
+    }
+  }
+
   private void ensureOk(HttpResponse<String> response, String prefix) {
     if (response.statusCode() >= 200 && response.statusCode() < 300) {
       return;
@@ -133,9 +251,16 @@ public class NotificationClient {
       if (node.has("message")) {
         message = node.get("message").asText();
       }
+      if (node.has("code")) {
+        message = node.get("code").asText() + ": " + message;
+      }
     } catch (IOException ignored) {
       // keep raw body
     }
     throw new NotificationHubException(prefix + ": " + response.statusCode() + " - " + message, response.statusCode());
+  }
+
+  private static String enc(String value) {
+    return URLEncoder.encode(value, StandardCharsets.UTF_8);
   }
 }

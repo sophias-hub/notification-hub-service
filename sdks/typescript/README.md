@@ -33,7 +33,7 @@ const response = await client.sendNotification(
   { name: 'Sophia' }
 );
 
-console.log(`Success! Message ID: ${response.messageId}`);
+console.log(`Success! Record ID: ${response.recordId}`);
 ```
 
 ## Integration & Running Instructions

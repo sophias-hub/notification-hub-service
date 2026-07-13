@@ -29,7 +29,7 @@ response = client.send_notification(
     {"name": "Sophia"},
 )
 
-print(response.messageId)
+print(response.recordId)
 ```
 
 ## Smoke example
