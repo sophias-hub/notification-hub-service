@@ -45,6 +45,60 @@ PYTHONPATH="sdks/python/src${PYTHONPATH:+:$PYTHONPATH}" \
 
 echo "==> SDK docs index → ${OUT_ROOT}/index.html"
 cp "${ROOT}/scripts/sdk-docs-index.html" "${OUT_ROOT}/index.html"
+cp "${ROOT}/docs/brand/favicon.png" "${OUT_ROOT}/favicon.png"
+cp "${ROOT}/docs/brand/favicon.svg" "${OUT_ROOT}/favicon.svg"
+# Also place favicons in language subdirs for deep links.
+for lang in typescript java python; do
+  if [[ -d "${OUT_ROOT}/${lang}" ]]; then
+    cp "${ROOT}/docs/brand/favicon.png" "${OUT_ROOT}/${lang}/favicon.png"
+    cp "${ROOT}/docs/brand/favicon.svg" "${OUT_ROOT}/${lang}/favicon.svg"
+  fi
+done
+
+# Python pdoc titles default to module name — normalize browser tabs + favicon.
+if [[ -d "${OUT_ROOT}/python" ]]; then
+  echo "==> Brand Python SDK page titles + favicon"
+  python3 - <<'PY'
+from pathlib import Path
+root = Path("docs/sdk/python")
+title = "Python SDK Docs | Notification Hub Service"
+icon = '<link rel="icon" href="./favicon.svg" type="image/svg+xml">\n<link rel="alternate icon" href="./favicon.png" type="image/png">'
+for html in root.rglob("*.html"):
+    text = html.read_text(encoding="utf-8")
+    orig = text
+    # Replace existing title tags
+    import re
+    text = re.sub(r"<title>[^<]*</title>", f"<title>{title}</title>", text, count=1, flags=re.I)
+    if "<title>" not in text.lower() and "<head" in text.lower():
+        text = re.sub(r"(<head[^>]*>)", rf"\1\n<title>{title}</title>", text, count=1, flags=re.I)
+    if 'rel="icon"' not in text and "<head" in text.lower():
+        text = re.sub(r"(<head[^>]*>)", rf"\1\n{icon}", text, count=1, flags=re.I)
+    if text != orig:
+        html.write_text(text, encoding="utf-8")
+PY
+fi
+
+# Inject favicon into Java HTML if windowtitle pages lack one.
+if [[ -d "${OUT_ROOT}/java" ]]; then
+  echo "==> Inject favicon into Java SDK HTML"
+  python3 - <<'PY'
+from pathlib import Path
+import re
+root = Path("docs/sdk/java")
+icon = '<link rel="icon" href="./favicon.svg" type="image/svg+xml">\n<link rel="alternate icon" href="./favicon.png" type="image/png">'
+for html in root.rglob("*.html"):
+    text = html.read_text(encoding="utf-8", errors="ignore")
+    if 'rel="icon"' in text or "<head" not in text.lower():
+        continue
+    # Nested package pages need relative path to java root favicon
+    depth = len(html.relative_to(root).parts) - 1
+    prefix = "../" * depth if depth > 0 else "./"
+    tag = icon.replace("./", prefix)
+    text2 = re.sub(r"(<head[^>]*>)", rf"\1\n{tag}", text, count=1, flags=re.I)
+    if text2 != text:
+        html.write_text(text2, encoding="utf-8")
+PY
+fi
 
 echo "==> Apply Java Javadoc theme (bake into stylesheet.css)"
 chmod +x "${ROOT}/scripts/apply-java-javadoc-theme.sh"

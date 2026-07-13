@@ -1,4 +1,4 @@
-# Notification Hub Service — agent overview
+# Notification Hub Service—agent overview
 
 This file is the **source of truth for coding agents** working in `notification-hub-service`.
 Read it before changing API behavior, SDKs, OpenAPI, or CI/docs publishing.
@@ -58,14 +58,14 @@ Clients / SDKs / Swagger Try it out
  src/authentication.ts  ← tsoa security helper (not Express middleware)
 ```
 
-**Dual surface:** Express routes implement the live API. TSOA controllers are **not** mounted; they exist so `tsoa spec` can emit OpenAPI. Keep **behavior and schemas in sync** across:
+**Dual surface:** Express routes implement the live API. TSOA controllers aren't mounted; they exist so `tsoa spec` can emit OpenAPI. Keep **behavior and schemas in sync** across:
 
 1. `src/server.ts` + `store.ts` + `errors.ts`
 2. `src/controllers/notificationController.ts`
 3. All three SDK clients
 4. Antora hub embeds (sibling `docs` repo) that point at published OpenAPI
 
-There is **no** generated `routes.ts` wiring — do not assume tsoa routes run at runtime.
+There is **no** generated `routes.ts` wiring—don't assume tsoa routes run at runtime.
 
 ---
 
@@ -89,7 +89,7 @@ There is **no** generated `routes.ts` wiring — do not assume tsoa routes run a
 | `PUT` / `PATCH` | `/api/v1/templates/{id}` |
 | `DELETE` | `/api/v1/templates/{id}` → `204` (`409 TEMPLATE_IN_USE` if referenced by records) |
 
-**Send + delivery records** (records = send history / receipts — **not** chat messages)
+**Send + delivery records** (records = send history / receipts—**not** chat messages)
 
 | Method | Path |
 |--------|------|
@@ -117,7 +117,7 @@ Defaults: all channels allowed until set. Opt-out blocks send with `403 CHANNEL_
 | `GET` / `DELETE` | `/api/v1/webhooks/{id}` |
 | `GET` | `/api/v1/webhooks/deliveries` |
 
-Registering a URL does **not** call it. Sends append fake delivery attempts for demos.
+Registering a URL doesn't call it. Sends append fake delivery attempts for demos.
 
 **Ops**
 
@@ -200,7 +200,7 @@ npm run docs:sdk
 npm run docs:finalize
 ```
 
-Hub RapiDoc embeds read the **published** `docs-api` swagger URL — they stay stale until CI republishes after merge.
+Hub RapiDoc embeds read the **published** `docs-api` swagger URL—they stay stale until CI republishes after merge.
 
 ---
 
@@ -226,9 +226,9 @@ docker-compose up --build
 2. Prefer **stable error `code`s** over free-form strings; keep docs/hub aligned.
 3. Use **`records` / `recordId`**, never revive `/messages` / `messageId` for send tracking.
 4. Keep CORS methods aligned with verbs you add (`GET/POST/PUT/PATCH/DELETE`).
-5. Do not commit secrets, deploy private keys, or `.env` with real credentials.
-6. Do not invent production features (queues, OAuth, real providers) unless explicitly asked.
-7. Work on a feature branch / `working-branch`; open PRs — avoid silent pushes to `main`.
+5. Don't commit secrets, deploy private keys, or `.env` with real credentials.
+6. Don't invent production features (queues, OAuth, real providers) unless explicitly asked.
+7. Work on a feature branch / `working-branch`; open PRs—avoid silent pushes to `main`.
 8. After API shape changes, regenerate and validate OpenAPI before finishing.
 9. Guide prose lives in the **`docs`** repo; this repo owns contracts + SDK reference generation.
 

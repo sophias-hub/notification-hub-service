@@ -73,7 +73,9 @@ const indexHtml = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notification Hub API Reference</title>
+  <title>API Docs | Notification Hub Service</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="./favicon.png" type="image/png">
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
     html { box-sizing: border-box; overflow-y: scroll; }
@@ -103,6 +105,14 @@ const indexHtml = `<!DOCTYPE html>
 `;
 
 fs.writeFileSync(path.join(outputDir, 'index.html'), indexHtml, 'utf8');
+
+const brandDir = path.join(__dirname, '../docs/brand');
+for (const name of ['favicon.svg', 'favicon.png']) {
+  const src = path.join(brandDir, name);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(outputDir, name));
+  }
+}
 
 console.log(`\nStatic Swagger UI site generated at ${outputDir}`);
 console.log(`Try it out target: ${publicApiUrl}\n`);

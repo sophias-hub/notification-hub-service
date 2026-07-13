@@ -66,7 +66,18 @@ const proxyApi = async (req: Request, res: Response, next: NextFunction): Promis
 
 app.use('/api', proxyApi);
 
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customSiteTitle: 'API Docs | Notification Hub Service',
+  customfavIcon: '/docs/favicon.png',
+}));
+
+// Serve brand favicon for the local Swagger UI sandbox.
+app.get('/docs/favicon.png', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../docs/brand/favicon.png'));
+});
+app.get('/docs/favicon.svg', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../docs/brand/favicon.svg'));
+});
 
 app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('API proxy error:', error.message);

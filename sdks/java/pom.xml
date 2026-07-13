@@ -38,8 +38,8 @@
         <configuration>
           <!-- javadoc:javadoc uses outputDirectory (not reportOutputDirectory). -->
           <outputDirectory>${project.basedir}/../../docs/sdk/java</outputDirectory>
-          <doctitle>Notification Hub SDK (Java)</doctitle>
-          <windowtitle>Notification Hub SDK (Java)</windowtitle>
+          <doctitle>Java SDK Docs | Notification Hub Service</doctitle>
+          <windowtitle>Java SDK Docs | Notification Hub Service</windowtitle>
           <failOnError>true</failOnError>
           <doclint>none</doclint>
           <!-- Overlay modern theme (path relative to javadocDirectory; avoids spaces in CLI args). -->
