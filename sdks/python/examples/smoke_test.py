@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Smoke example against a local or remote Notification Hub API."""
+"""Smoke example covering the learning-path flow."""
 
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
-# Allow running without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from notification_hub import NotificationClient, NotificationHubError
@@ -18,23 +18,34 @@ def main() -> int:
 
     print("Initializing Notification SDK client...")
     client = NotificationClient(api_key, base_url)
+    template_id = f"sdk-demo-{int(time.time())}"
 
     try:
-        print("\n--- Test 1: Requesting Available Templates ---")
-        templates = client.get_templates()
-        print("Templates successfully received from API:")
-        for template in templates:
-            print(f"  {template}")
+        print("\n--- Create template ---")
+        created = client.create_template(template_id, "SDK Demo", "email", body="Hello {{name}}")
+        print(f"Created: {created.id}")
 
-        print("\n--- Test 2: Dispatching Notification via SDK ---")
+        print("\n--- Retrieve template ---")
+        retrieved = client.get_template(created.id)
+        print(f"Retrieved: {retrieved.name}")
+
+        print("\n--- Set preference ---")
+        prefs = client.set_preferences("sdk@example.com", email=True, sms=False, push=False)
+        print(f"Preferences: {prefs}")
+
+        print("\n--- Send notification ---")
         response = client.send_notification(
-            "alex@example.com",
+            "sdk@example.com",
             "email",
-            "welcome-email",
+            created.id,
             {"name": "Alexander"},
         )
-        print("API successfully processed SDK request:")
-        print(f"  {response}")
+        print(f"Sent: {response}")
+
+        print("\n--- Check record status ---")
+        record = client.get_record(response.recordId)
+        print(f"Status: {record.status}")
+
         print("\nAll SDK integration tests completed successfully!")
         return 0
     except NotificationHubError as exc:

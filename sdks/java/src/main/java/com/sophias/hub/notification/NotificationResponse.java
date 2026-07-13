@@ -5,7 +5,7 @@ package com.sophias.hub.notification;
  */
 public class NotificationResponse {
   private String status;
-  private String messageId;
+  private String recordId;
   private String processedAt;
 
   public String getStatus() {
@@ -16,12 +16,12 @@ public class NotificationResponse {
     this.status = status;
   }
 
-  public String getMessageId() {
-    return messageId;
+  public String getRecordId() {
+    return recordId;
   }
 
-  public void setMessageId(String messageId) {
-    this.messageId = messageId;
+  public void setRecordId(String recordId) {
+    this.recordId = recordId;
   }
 
   public String getProcessedAt() {
@@ -34,7 +34,7 @@ public class NotificationResponse {
 
   @Override
   public String toString() {
-    return "NotificationResponse{status='%s', messageId='%s', processedAt='%s'}"
-        .formatted(status, messageId, processedAt);
+    return "NotificationResponse{status='%s', recordId='%s', processedAt='%s'}"
+        .formatted(status, recordId, processedAt);
   }
 }
