@@ -17,6 +17,12 @@ export interface Template {
 /** Delivery status for a send record. */
 export type RecordStatus = 'queued' | 'delivered' | 'failed';
 
+export const ALLOWED_RECORD_STATUSES: RecordStatus[] = ['queued', 'delivered', 'failed'];
+
+export function isRecordStatus(value: unknown): value is RecordStatus {
+  return typeof value === 'string' && ALLOWED_RECORD_STATUSES.includes(value as RecordStatus);
+}
+
 /** Tracking record created by a successful send. */
 export interface DeliveryRecord {
   recordId: string;
@@ -194,7 +200,11 @@ export class HubStore {
   }
 
   deleteWebhook(id: string): boolean {
-    return this.webhooks.delete(id);
+    const deleted = this.webhooks.delete(id);
+    if (deleted) {
+      this.deliveries = this.deliveries.filter((d) => d.webhookId !== id);
+    }
+    return deleted;
   }
 
   addDelivery(delivery: WebhookDelivery): void {

@@ -10,7 +10,6 @@ async function runTest() {
   try {
     console.log('\n--- Create template ---');
     const created = await client.createTemplate({
-      id: `sdk-demo-${Date.now()}`,
       name: 'SDK Demo',
       channel: 'email',
       body: 'Hello {{name}}',

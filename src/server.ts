@@ -6,18 +6,21 @@ import { ApiError, Errors } from './errors.js';
 import {
   store,
   isChannel,
+  isRecordStatus,
   defaultPreferences,
   type Channel,
-  type RecordStatus,
   type Preferences,
   type Template,
+  type DeliveryRecord,
+  type RecordStatus,
 } from './store.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const VALID_API_KEY = 'secure-token-123';
+const VALID_API_KEY = process.env.API_KEY || 'secure-token-123';
+const WEBHOOK_EVENT_DELIVERED = 'record.delivered';
 
 app.use(express.json());
 
@@ -49,16 +52,26 @@ function newId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
+function allocateId(
+  prefix: string,
+  exists: (id: string) => boolean
+): string {
+  let id = newId(prefix);
+  while (exists(id)) {
+    id = newId(prefix);
+  }
+  return id;
+}
+
 function validateTemplateFields(body: Partial<Template>, requireAll: boolean): void {
-  const id = body.id;
   const name = body.name;
   const channel = body.channel;
 
   if (requireAll) {
     const missing: string[] = [];
-    if (!id) missing.push('id');
-    if (!name) missing.push('name');
-    if (!channel) missing.push('channel');
+    // Treat only absent values as missing; empty strings are invalid body (422).
+    if (name === undefined || name === null) missing.push('name');
+    if (channel === undefined || channel === null) missing.push('channel');
     if (missing.length) throw Errors.missingFields(missing);
   }
 
@@ -69,13 +82,16 @@ function validateTemplateFields(body: Partial<Template>, requireAll: boolean): v
   if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
     throw Errors.invalidTemplateBody('Template name must be a non-empty string.', { field: 'name' });
   }
+}
 
-  if (id !== undefined && (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id))) {
-    throw Errors.invalidTemplateBody(
-      "Template id must be lowercase letters, numbers, and hyphens only.",
-      { field: 'id', id }
-    );
-  }
+function buildTemplate(
+  id: string,
+  fields: { name: string; channel: Channel; subject?: string; body?: string }
+): Template {
+  const template: Template = { id, name: fields.name, channel: fields.channel };
+  if (fields.subject !== undefined) template.subject = fields.subject;
+  if (fields.body !== undefined) template.body = fields.body;
+  return template;
 }
 
 function channelAllowedOrThrow(recipient: string, channel: Channel): void {
@@ -86,14 +102,29 @@ function channelAllowedOrThrow(recipient: string, channel: Channel): void {
 
 function recordWebhookDeliveries(recordId: string): void {
   for (const webhook of store.listWebhooks()) {
+    if (!webhook.events.includes(WEBHOOK_EVENT_DELIVERED)) {
+      continue;
+    }
     store.addDelivery({
-      id: newId('del'),
+      id: allocateId('del', (candidate) => store.listDeliveries().some((d) => d.id === candidate)),
       webhookId: webhook.id,
       recordId,
       status: 'delivered',
       attemptedAt: new Date().toISOString(),
     });
   }
+}
+
+function handleRouteError(res: Response, err: unknown): void {
+  if (err instanceof ApiError) {
+    sendError(res, err);
+    return;
+  }
+  console.error('[ERROR] Unexpected failure:', err);
+  sendError(
+    res,
+    new ApiError(500, 'Internal Server Error', 'INTERNAL_ERROR', 'An unexpected error occurred.')
+  );
 }
 
 /**
@@ -133,18 +164,18 @@ app.get('/api/v1/templates/:id', authenticateApiKey, (req: Request, res: Respons
 app.post('/api/v1/templates', authenticateApiKey, (req: Request, res: Response) => {
   try {
     validateTemplateFields(req.body, true);
-    const { id, name, channel, subject, body } = req.body as Template;
-    if (store.getTemplate(id)) {
-      throw Errors.templateIdExists(id);
-    }
-    const created = store.createTemplate({ id, name, channel, subject, body });
+    const { name, channel, subject, body } = req.body as Omit<Template, 'id'>;
+    const id = allocateId('tpl', (candidate) => Boolean(store.getTemplate(candidate)));
+    const fields: { name: string; channel: Channel; subject?: string; body?: string } = {
+      name,
+      channel,
+    };
+    if (subject !== undefined) fields.subject = subject;
+    if (body !== undefined) fields.body = body;
+    const created = store.createTemplate(buildTemplate(id, fields));
     res.status(201).json(created);
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -155,20 +186,19 @@ app.put('/api/v1/templates/:id', authenticateApiKey, (req: Request, res: Respons
       throw Errors.templateNotFound(id);
     }
     const { name, channel, subject, body } = req.body as Partial<Template>;
-    if (!name || !channel) {
+    if (name === undefined || channel === undefined) {
       throw Errors.missingFields(
-        [!name && 'name', !channel && 'channel'].filter(Boolean) as string[]
+        [name === undefined && 'name', channel === undefined && 'channel'].filter(Boolean) as string[]
       );
     }
     validateTemplateFields({ name, channel }, false);
-    const updated = store.updateTemplate(id, { name, channel, subject, body });
+    const patch: Partial<Omit<Template, 'id'>> = { name, channel };
+    if (subject !== undefined) patch.subject = subject;
+    if (body !== undefined) patch.body = body;
+    const updated = store.updateTemplate(id, patch);
     res.status(200).json(updated);
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -186,15 +216,15 @@ app.patch('/api/v1/templates/:id', authenticateApiKey, (req: Request, res: Respo
       });
     }
     validateTemplateFields(patch, false);
-    const { name, channel, subject, body } = patch;
-    const updated = store.updateTemplate(id, { name, channel, subject, body });
+    const update: Partial<Omit<Template, 'id'>> = {};
+    if (patch.name !== undefined) update.name = patch.name;
+    if (patch.channel !== undefined) update.channel = patch.channel;
+    if (patch.subject !== undefined) update.subject = patch.subject;
+    if (patch.body !== undefined) update.body = patch.body;
+    const updated = store.updateTemplate(id, update);
     res.status(200).json(updated);
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -210,11 +240,7 @@ app.delete('/api/v1/templates/:id', authenticateApiKey, (req: Request, res: Resp
     store.deleteTemplate(id);
     res.status(204).send();
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -233,8 +259,15 @@ app.post('/api/v1/send', authenticateApiKey, (req: Request, res: Response) => {
       throw Errors.invalidChannel(String(channel));
     }
 
-    if (!store.getTemplate(templateId)) {
+    const template = store.getTemplate(templateId);
+    if (!template) {
       throw Errors.templateNotFound(templateId);
+    }
+    if (template.channel !== channel) {
+      throw Errors.invalidTemplateBody(
+        `Template '${templateId}' is for channel '${template.channel}', but the send requested '${channel}'.`,
+        { templateId, templateChannel: template.channel, channel }
+      );
     }
 
     channelAllowedOrThrow(recipient, channel);
@@ -244,22 +277,23 @@ app.post('/api/v1/send', authenticateApiKey, (req: Request, res: Response) => {
       throw Errors.rateLimited(rate.retryAfterSeconds);
     }
 
-    const recordId = newId('rec');
+    const recordId = allocateId('rec', (candidate) => Boolean(store.getRecord(candidate)));
     const processedAt = new Date().toISOString();
-    store.createRecord({
+    const record: DeliveryRecord = {
       recordId,
       recipient,
       channel,
       templateId,
       status: 'queued',
       processedAt,
-      templateData,
-    });
+    };
+    if (templateData !== undefined) {
+      record.templateData = templateData;
+    }
+    store.createRecord(record);
 
     // Simulate quick delivery for the mock
-    const rec = store.getRecord(recordId)!;
-    rec.status = 'delivered';
-    store.createRecord(rec);
+    record.status = 'delivered';
     recordWebhookDeliveries(recordId);
 
     console.log(`[SUCCESS] Send recorded. Channel: ${channel} | Recipient: ${recipient}`);
@@ -270,19 +304,29 @@ app.post('/api/v1/send', authenticateApiKey, (req: Request, res: Response) => {
       processedAt,
     });
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
 app.get('/api/v1/records', authenticateApiKey, (req: Request, res: Response) => {
-  const recipient = typeof req.query.recipient === 'string' ? req.query.recipient : undefined;
-  const status =
-    typeof req.query.status === 'string' ? (req.query.status as RecordStatus) : undefined;
-  res.status(200).json(store.listRecords({ recipient, status }));
+  try {
+    const filters: { recipient?: string; status?: RecordStatus } = {};
+    if (typeof req.query.recipient === 'string') {
+      filters.recipient = req.query.recipient;
+    }
+    if (typeof req.query.status === 'string') {
+      if (!isRecordStatus(req.query.status)) {
+        throw Errors.invalidTemplateBody(
+          `Status '${req.query.status}' is not supported. Use queued, delivered, or failed.`,
+          { status: req.query.status, allowed: ['queued', 'delivered', 'failed'] }
+        );
+      }
+      filters.status = req.query.status;
+    }
+    res.status(200).json(store.listRecords(filters));
+  } catch (err) {
+    handleRouteError(res, err);
+  }
 });
 
 app.get('/api/v1/records/:recordId', authenticateApiKey, (req: Request, res: Response) => {
@@ -327,11 +371,7 @@ app.put('/api/v1/preferences/:recipient', authenticateApiKey, (req: Request, res
     const prefs: Preferences = { recipient, email, sms, push };
     res.status(200).json(store.setPreferences(prefs));
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -353,11 +393,7 @@ app.patch('/api/v1/preferences/:recipient', authenticateApiKey, (req: Request, r
     };
     res.status(200).json(store.setPreferences(prefs));
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -382,11 +418,7 @@ app.post('/api/v1/unsubscribe', authenticateApiKey, (req: Request, res: Response
     const prefs: Preferences = { ...current, recipient, [channel]: false };
     res.status(200).json(store.setPreferences(prefs));
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -399,19 +431,30 @@ app.post('/api/v1/webhooks', authenticateApiKey, (req: Request, res: Response) =
     if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
       throw Errors.invalidTemplateBody('Webhook url must be an http(s) URL.', { field: 'url' });
     }
+    let resolvedEvents: string[];
+    if (events === undefined) {
+      resolvedEvents = [WEBHOOK_EVENT_DELIVERED];
+    } else if (
+      !Array.isArray(events) ||
+      events.length === 0 ||
+      events.some((event) => typeof event !== 'string')
+    ) {
+      throw Errors.invalidTemplateBody(
+        'Webhook events must be a non-empty array of event name strings.',
+        { field: 'events' }
+      );
+    } else {
+      resolvedEvents = events;
+    }
     const webhook = store.createWebhook({
-      id: newId('wh'),
+      id: allocateId('wh', (candidate) => Boolean(store.getWebhook(candidate))),
       url,
-      events: Array.isArray(events) ? events : ['record.delivered'],
+      events: resolvedEvents,
       createdAt: new Date().toISOString(),
     });
     res.status(201).json(webhook);
   } catch (err) {
-    if (err instanceof ApiError) {
-      sendError(res, err);
-      return;
-    }
-    throw err;
+    handleRouteError(res, err);
   }
 });
 
@@ -442,8 +485,17 @@ app.delete('/api/v1/webhooks/:id', authenticateApiKey, (req: Request, res: Respo
   res.status(204).send();
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Notification Hub server is running locally on http://localhost:${PORT}`);
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  handleRouteError(res, err);
 });
+
+// Supertest drives `app` in-process. Skip listen under Jest so tests don't bind
+// :3000 and collide with a local `npm start` (which surfaces as ECONNRESET).
+const server =
+  process.env.JEST_WORKER_ID === undefined
+    ? app.listen(PORT, () => {
+        console.log(`🚀 Notification Hub server is running locally on http://localhost:${PORT}`);
+      })
+    : undefined;
 
 export { app, server, store };

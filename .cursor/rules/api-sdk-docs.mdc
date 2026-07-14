@@ -1,0 +1,54 @@
+---
+description: Standards for API and SDK reference documentation in this repo (OpenAPI, TypeDoc, Javadoc, pdoc).
+globs: src/controllers/**/*.ts,sdks/**/*.{ts,java,py,md},tsoa.json,typedoc.json
+alwaysApply: false
+---
+
+# API / SDK documentation standards
+
+Document **everything published** via OpenAPI (`docs-api`) and SDK refs (`docs-sdk`). Source of behavior is `src/server.ts`; document through tsoa + SDK comments so generated sites stay complete.
+
+## Voice
+
+- **Full sentences** that explain purpose and effect. Simple, precise, technical terms. No fluff, no tutorials, no marketing.
+- Exhaustive after reading: no ambiguity about inputs, outputs, auth, limits, or how to recover from errors.
+- State required formats, enums, defaults, and hard limits explicitly—inside readable sentences, not fragment labels alone.
+- **Verb-led altering fields:** when a field/param changes behavior or result, start with a verb (Defines…, Specifies…, Sets whether…, Limits…).
+- **Monospace:** backtick field names, literals/enums, error codes, headers, and placeholders (`recipient`, `email`, `RATE_LIMITED`, `X-API-Key`, `{{name}}`).
+- **Hyperlink HTTP operations:** when mentioning another endpoint, use a Markdown link to the published Swagger deep link, for example [`POST /api/v1/send`](https://sophias-hub.github.io/docs-api/#/Send/SendNotification). Never bare “send”. Java: `<a href="…"><code>METHOD /path</code></a>`. Format `#/{Tag}/{operationId}` — see `write-docs` skill table.
+- **Description + NOTE:** primary meaning first; put constraints, defaults, and scenario outcomes under `**NOTE**:` (Java: `<strong>NOTE:</strong>`). Separate with a blank comment line so CommonMark gets a paragraph break.
+- **Line breaks:** do not rely on single newlines in OpenAPI. Use a blank line before `**NOTE**:`, or end a line with `\` for a hard break.
+- **Do not repeat the schema:** never restate type, name, or nullability already visible on the field/signature. Document meaning, constraints, examples, and troubleshooting only.
+- **Do not document Antora happy-path walkthroughs** here. Hub: sibling `docs` / https://sophias-hub.github.io/docs/.
+
+## Completeness (must cover)
+
+For each **endpoint** (tsoa):
+
+- Purpose, auth, field meaning/constraints (verb-led when altering; monospace for code pieces)
+- Success codes plus **every runtime error** with a `@Response` description that includes **troubleshooting** (what to check or fix), with hyperlinked follow-up operations where useful
+- **Paired examples:** every request payload example has a consecutive success response example; failure/edge examples when they clarify the contract
+- Limits that affect callers
+
+Antora how-tos embed the same operations via RapiDoc Mini—do not omit examples or error guidance because the hub covers the story.
+
+For each **SDK type / class / method / field**: meaning, formats/limits beyond the type, side effects (throws, HTTP verb), brief recovery hints, and hyperlinked API operations when cross-referencing.
+
+## Sync
+
+1. Runtime (`server.ts` / `store.ts` / `errors.ts`)
+2. tsoa controller (OpenAPI)
+3. TypeScript, Java, and Python SDKs (same surface)
+4. Regenerate: `npx tsoa spec` + `npm run docs:sdk` when docs change
+
+Use `records` / `recordId` (not messages). Demo key: `X-API-Key: secure-token-123`.
+
+## Do not
+
+- Leave undocumented public methods, fields, or endpoints
+- Ship request examples without matching success response examples
+- Document errors without troubleshooting text
+- Mention HTTP operations without docs-api hyperlinks (when cross-referencing)
+- Repeat what the typed schema already shows (type/name/optionality)
+- Duplicate Antora happy paths or tutorials
+- Invent production behavior the mock does not implement

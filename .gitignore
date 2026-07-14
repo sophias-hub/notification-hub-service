@@ -30,6 +30,9 @@ docs/*
 # Keep source brand assets (TypeDoc / Swagger / SDK index favicons)
 !docs/brand/
 !docs/brand/**
+# Keep publish-target README templates used by docs:finalize
+!docs/templates/
+!docs/templates/**
 
 # Language SDK build artifacts
 sdks/java/target/

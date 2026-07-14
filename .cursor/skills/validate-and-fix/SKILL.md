@@ -1,10 +1,12 @@
 ---
 name: validate-and-fix
 description: >-
-  Runs Markdown validation (Vale + Lychee via npm run validate) in
-  notification-hub-service, fixes prose and link failures, and re-runs until
-  clean. Use when the user asks to validate, fix Vale/Lychee errors, lint
-  Markdown, or run checks before commit or push in this repo.
+  Runs validation (markdownlint + Vale + Lychee via npm run validate) in
+  notification-hub-service, fixes failures, and re-runs until clean. Does not
+  run API tests or build docs / regenerate OpenAPI. Use when the user asks to
+  validate, fix Vale/Lychee/markdownlint errors, lint Markdown, or run checks
+  before commit or push in this repo. For a full pre-PR gate (tests + docs),
+  use npm run pre-pr.
 ---
 
 # Validate and fix (notification-hub-service)
@@ -12,8 +14,9 @@ description: >-
 Close the CI validation loop locally before commit or push. Use this repo’s
 existing `npm run validate` only—don't invent a parallel validator.
 
-**Scope:** Markdown under this repo (`scripts/validate.sh`). Vale skips
-`node_modules/`, `docs/sdk/`, and `docs/api-site/`.
+**Scope:** `scripts/validate.sh` (Markdown only — no API tests, no docs/OpenAPI
+builds). Vale/markdownlint skip `node_modules/`, `docs/sdk/`, and
+`docs/api-site/`. For the full CI mirror before a PR, use `npm run pre-pr`.
 
 ## Workflow
 
@@ -36,6 +39,14 @@ Validate Progress:
 6. **Never** commit or push unless the user explicitly asked.
 
 ## Parse and fix failures
+
+### markdownlint
+
+Typical line: `path:line MD0xx Rule / message`
+
+- Fix heading structure, blank lines, list markers, and fence formatting.
+- Config is `.markdownlint.json`. Don't weaken rules unless the repo already
+  documents an intentional exception.
 
 ### Vale
 
