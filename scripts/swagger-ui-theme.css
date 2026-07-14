@@ -1,0 +1,39 @@
+/* Shared Swagger UI theme overrides for local sandbox + static api-site. */
+
+/* Hide bottom Models/Schemas catalog (schemas remain on each operation). */
+.swagger-ui section.models {
+  display: none !important;
+}
+
+/* Hide package license line (e.g. ISC) under the API title. */
+.swagger-ui .info .main .link,
+.swagger-ui .info .license {
+  display: none !important;
+}
+
+/* API overview lead (info.description first paragraph). */
+.swagger-ui .info .description > .renderedMarkdown > p:first-child,
+.swagger-ui .info .description > div.markdown > p:first-child,
+.swagger-ui .info .description p:first-of-type {
+  font-size: 1.35rem;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #1b1b1b;
+  margin-top: 0.25rem;
+}
+
+/* Operation descriptions (expanded endpoint body). */
+.swagger-ui .opblock-body .opblock-description-wrapper p,
+.swagger-ui .opblock-description-wrapper .renderedMarkdown p,
+.swagger-ui .opblock-description-wrapper .markdown p {
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: #222;
+}
+
+/* Tag group descriptions under section headers. */
+.swagger-ui .opblock-tag-section small,
+.swagger-ui .opblock-tag small {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}

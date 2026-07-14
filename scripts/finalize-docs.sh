@@ -18,6 +18,10 @@ fi
 cp docs/meta.json docs/sdk/meta.json
 cp docs/meta.json docs/api-site/meta.json
 
+# Persist “no changelog here” READMEs on publish targets.
+cp docs/templates/docs-sdk-README.md docs/sdk/README.md
+cp docs/templates/docs-api-README.md docs/api-site/README.md
+
 # Provenance on the SDK index and each language site root pages.
 npx tsx scripts/inject-provenance-banner.ts docs/sdk "SDK docs index"
 for lang in typescript java python; do

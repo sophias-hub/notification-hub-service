@@ -14,4 +14,6 @@ exclude = [
   '^http://localhost',
   '^https://localhost',
   '^https://sophias-hub\.github\.io/docs-sdk/(typescript|java|python)/?',
+  # Present locally; remote 404 until CHANGELOG merges to main.
+  '^https://github.com/sophias-hub/notification-hub-service/blob/.*/CHANGELOG',
 ]

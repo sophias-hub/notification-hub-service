@@ -88,6 +88,15 @@ API and SDK reference docs are generated from this repo in CI and published to s
 
 - [API Reference](https://sophias-hub.github.io/docs-api/): Endpoints, headers, request/response formats (Swagger Try it out).
 - [SDK Guide](https://sophias-hub.github.io/docs-sdk/): How to use the TypeScript client module.
+- [Guides hub](https://sophias-hub.github.io/docs/): Tutorials, how-tos, and explanations (Antora).
+
+### Changelog and releases
+
+Product changes (API, SDKs, generated reference docs) are recorded in **[CHANGELOG.md](./CHANGELOG.md)** ([Keep a Changelog](https://keepachangelog.com/)).
+
+- Update `CHANGELOG.md` in the same PR as user-visible behavior changes.
+- For notable versions, publish a matching [GitHub Release](https://github.com/sophias-hub/notification-hub-service/releases) from that changelog entry.
+- Don't add changelogs in `docs-api` or `docs-sdk`; those repos are publish targets with build provenance only.
 
 ### Interactive Swagger (Try it out)
 

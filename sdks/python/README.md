@@ -1,6 +1,6 @@
 # Notification Hub SDK (Python)
 
-Thin HTTP client for the Notification Hub API. Mirrors the TypeScript `NotificationClient`.
+Thin HTTP client for the Notification Hub API.
 
 ## Requirements
 
@@ -13,44 +13,19 @@ cd sdks/python
 pip install -e .
 ```
 
-## Quick start
+## Construct the client
 
 ```python
 from notification_hub import NotificationClient
 
 client = NotificationClient("secure-token-123", "http://localhost:3000")
-
-templates = client.get_templates()
-
-response = client.send_notification(
-    "user@example.com",
-    "email",
-    "welcome-email",
-    {"name": "Sophia"},
-)
-
-print(response.recordId)
 ```
 
-## Smoke example
-
-With the API running locally:
-
-```bash
-cd sdks/python
-python examples/smoke_test.py
-# or:
-python examples/smoke_test.py secure-token-123 http://localhost:3000
-```
-
-## API surface
-
-| Method | HTTP |
-| --- | --- |
-| `get_templates()` | `GET /api/v1/templates` |
-| `send_notification(...)` | `POST /api/v1/send` |
-| `send(...)` (deprecated) | wraps `send_notification` with `legacy-raw-template` |
-
-Auth header: `X-API-Key`
+Auth header: `X-API-Key`. Demo key: `secure-token-123`.
 
 Uses the Python standard library only (`urllib`).
+
+## Docs
+
+- Guided happy path (Antora hub): https://sophias-hub.github.io/docs/
+- Generated SDK reference: https://sophias-hub.github.io/docs-sdk/python/

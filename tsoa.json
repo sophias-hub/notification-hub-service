@@ -9,10 +9,17 @@
   "spec": {
     "outputDirectory": "docs/api",
     "specVersion": 2,
-    "info": {
-      "title": "🚀 Notification Hub API",
-      "version": "1.0.0"
-    },
+    "name": "🚀 Notification Hub API",
+    "description": "Portfolio mock API for email, SMS, and push notification dispatch.\n\n**Try it out:** Authorize with our try-out key `secure-token-123` (header `X-API-Key`).",
+    "license": "",
+    "tags": [
+      { "name": "Health", "description": "Readiness checks for the mock service." },
+      { "name": "Templates", "description": "Reusable message definitions in the template catalog." },
+      { "name": "Send", "description": "Dispatch a notification from a template." },
+      { "name": "Records", "description": "Delivery receipts created by send calls." },
+      { "name": "Preferences", "description": "Channel opt-in settings and unsubscribe." },
+      { "name": "Webhooks", "description": "Callback registrations and simulated deliveries." }
+    ],
     "specMetaData": {
       "servers": [
         {
@@ -26,7 +33,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-API-Key",
-        "description": "🔑 Enter your secure token (e.g., secure-token-123) to authorize requests."
+        "description": "🔑 To try requests in this docs UI, authorize with the try-out key `secure-token-123` (`X-API-Key` header)."
       }
     }
   }

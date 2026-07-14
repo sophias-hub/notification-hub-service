@@ -15,19 +15,28 @@ const specPath = path.join(__dirname, '../docs/api/swagger.json');
 
 if (!fs.existsSync(specPath)) {
   console.error(`\n❌ Error: Missing file at ${specPath}`);
-  console.error(`💡 Please execute 'npm run docs:api' before launching the server!\n`);
+  console.error(`💡 Run "npx tsoa spec" (or "npm run docs:api") to generate it.\n`);
   process.exit(1);
 }
 
-const swaggerDocument = JSON.parse(fs.readFileSync(specPath, 'utf8'));
+/** Fresh OpenAPI from disk on every read (avoids stale in-memory specs after regen). */
+function loadSwaggerDocument(): Record<string, unknown> {
+  const swaggerDocument = JSON.parse(fs.readFileSync(specPath, 'utf8')) as Record<string, unknown>;
 
-// Point Swagger UI at this docs server so "Try it out" stays same-origin.
-// API calls are proxied from /api/* to the real service below.
-if (swaggerDocument.openapi) {
-  swaggerDocument.servers = [{ url: `http://localhost:${PORT}` }];
-} else if (swaggerDocument.swagger) {
-  swaggerDocument.host = `localhost:${PORT}`;
-  swaggerDocument.schemes = ['http'];
+  // Point Swagger UI at this docs server so "Try it out" stays same-origin.
+  if (swaggerDocument.openapi) {
+    swaggerDocument.servers = [{ url: `http://localhost:${PORT}` }];
+  } else if (swaggerDocument.swagger) {
+    swaggerDocument.host = `localhost:${PORT}`;
+    swaggerDocument.schemes = ['http'];
+    swaggerDocument.basePath = '/';
+  }
+
+  const info = (swaggerDocument.info ?? {}) as Record<string, unknown>;
+  delete info.license;
+  swaggerDocument.info = info;
+
+  return swaggerDocument;
 }
 
 app.use(express.json());
@@ -66,12 +75,34 @@ const proxyApi = async (req: Request, res: Response, next: NextFunction): Promis
 
 app.use('/api', proxyApi);
 
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+// Spec URL for Swagger UI — always re-reads docs/api/swagger.json
+app.get('/docs/openapi.json', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(loadSwaggerDocument());
+});
+
+const themeCss = fs.readFileSync(path.join(__dirname, 'swagger-ui-theme.css'), 'utf8');
+
+const swaggerUiOptions = {
   customSiteTitle: 'API Docs | Notification Hub Service',
   customfavIcon: '/docs/favicon.png',
-}));
+  customCss: themeCss,
+  swaggerOptions: {
+    url: '/docs/openapi.json',
+    deepLinking: true,
+    tryItOutEnabled: true,
+    persistAuthorization: true,
+    docExpansion: 'list',
+    defaultModelsExpandDepth: -1,
+    defaultModelExpandDepth: 2,
+    displayRequestDuration: true,
+    filter: true,
+  },
+};
 
-// Serve brand favicon for the local Swagger UI sandbox.
+// null swaggerDoc + url → UI fetches /docs/openapi.json (fresh each load)
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerUiOptions));
+
 app.get('/docs/favicon.png', (_req, res) => {
   res.sendFile(path.join(__dirname, '../docs/brand/favicon.png'));
 });
@@ -88,7 +119,10 @@ app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(PORT, () => {
+  const doc = loadSwaggerDocument();
+  const pathCount = Object.keys((doc.paths as object) || {}).length;
   console.log(`\n🚀 UI Sandbox Live!`);
   console.log(`🌐 Explore your API documentation locally here: http://localhost:${PORT}/docs`);
+  console.log(`📄 Spec paths loaded: ${pathCount} (from docs/api/swagger.json)`);
   console.log(`🔁 Proxying /api/* to ${API_BASE_URL}\n`);
 });

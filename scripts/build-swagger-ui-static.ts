@@ -50,24 +50,26 @@ swaggerDocument.servers = [
 ];
 
 const info = (swaggerDocument.info ?? {}) as Record<string, unknown>;
-info.title = 'Notification Hub API';
+info.title = '🚀 Notification Hub API';
 info.description = [
   'Portfolio mock API for email, SMS, and push notification dispatch.',
   '',
-  '**Try it out:** Authorize with API key `secure-token-123` (header `X-API-Key`).',
+  '**Try it out:** Authorize with our try-out key `secure-token-123` (header `X-API-Key`).',
   publicApiUrl.includes('localhost')
     ? 'This build points at localhost. For the published docs site, set `PUBLIC_API_URL` to a deployed mock API.'
     : `Requests go to \`${publicApiUrl}\`.`,
 ].join('\n');
+delete info.license;
 swaggerDocument.info = info;
 
 fs.mkdirSync(outputDir, { recursive: true });
-fs.writeFileSync(
-  path.join(outputDir, 'swagger.json'),
-  JSON.stringify(swaggerDocument, null, 2),
-  'utf8',
-);
+const swaggerJson = JSON.stringify(swaggerDocument, null, 2);
+fs.writeFileSync(path.join(outputDir, 'swagger.json'), swaggerJson, 'utf8');
 
+const themeCss = fs.readFileSync(path.join(__dirname, 'swagger-ui-theme.css'), 'utf8');
+
+// Embed the spec so Swagger UI works when opening index.html via file://
+// (browsers block fetch('./swagger.json') on the file protocol).
 const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -81,6 +83,7 @@ const indexHtml = `<!DOCTYPE html>
     html { box-sizing: border-box; overflow-y: scroll; }
     *, *:before, *:after { box-sizing: inherit; }
     body { margin: 0; background: #fafafa; }
+${themeCss}
   </style>
 </head>
 <body>
@@ -90,10 +93,15 @@ const indexHtml = `<!DOCTYPE html>
   <script>
     window.onload = function () {
       window.ui = SwaggerUIBundle({
-        url: './swagger.json',
+        spec: ${swaggerJson},
         dom_id: '#swagger-ui',
         deepLinking: true,
         tryItOutEnabled: true,
+        docExpansion: 'list',
+        defaultModelsExpandDepth: -1,
+        defaultModelExpandDepth: 2,
+        displayRequestDuration: true,
+        filter: true,
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         layout: 'StandaloneLayout',
         persistAuthorization: true,

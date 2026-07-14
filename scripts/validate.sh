@@ -34,6 +34,7 @@ if ! find . -type f -name '*.md' \
   ! -path './node_modules/*' \
   ! -path './docs/sdk/*' \
   ! -path './docs/api-site/*' \
+  ! -path './.cursor/*' \
   ! -path './.git/*' \
   -print -quit | grep -q .; then
   echo "No Markdown files found to lint."
@@ -43,6 +44,7 @@ find . -type f -name '*.md' \
   ! -path './node_modules/*' \
   ! -path './docs/sdk/*' \
   ! -path './docs/api-site/*' \
+  ! -path './.cursor/*' \
   ! -path './.git/*' \
   -print0 | xargs -0 vale
 
