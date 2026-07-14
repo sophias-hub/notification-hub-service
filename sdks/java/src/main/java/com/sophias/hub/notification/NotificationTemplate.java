@@ -8,7 +8,7 @@ public class NotificationTemplate {
   /**
    * Identifies the template in other API calls.
    *
-   * <strong>NOTE:</strong> Use lowercase letters, digits, and hyphens only (for example, {@code welcome-email}).
+   * <strong>NOTE:</strong> Assigned by the service when you create a template. Omit this field on create requests.
    */
   private String id;
   /** Names the template for UIs and operator tools. */

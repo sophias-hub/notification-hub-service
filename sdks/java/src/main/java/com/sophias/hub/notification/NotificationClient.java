@@ -83,22 +83,28 @@ public class NotificationClient {
   }
 
   /**
-   * Adds a new template to the catalog and returns the created object.
+   * Adds a new template to the catalog and returns the created object (including a service-assigned {@code id}).
    *
    * @throws NotificationHubException the message may contain:
    *     {@code UNAUTHORIZED} — send header {@code X-API-Key} with a valid key and retry;
-   *     {@code MISSING_FIELDS} — include {@code id}, {@code name}, and {@code channel}, then retry;
-   *     {@code TEMPLATE_ID_EXISTS} — choose a new {@code id}, or update the existing template with {@code PUT} /
-   *     {@code PATCH} instead of creating;
+   *     {@code MISSING_FIELDS} — include {@code name} and {@code channel}, then retry;
    *     {@code INVALID_CHANNEL} — use only {@code email}, {@code sms}, or {@code push}, then retry;
-   *     {@code INVALID_TEMPLATE_BODY} — use a non-empty {@code name} and an {@code id} of lowercase letters, digits,
-   *     and hyphens only, then retry
+   *     {@code INVALID_TEMPLATE_BODY} — use a non-empty {@code name}, then retry
    *
-   * <strong>NOTE:</strong> Calls <a href="https://sophias-hub.github.io/docs-api/#/Templates/CreateTemplate"><code>POST /api/v1/templates</code></a> ({@code 201}). The call fails if the {@code id} is
-   * already taken, the channel is unsupported, or the {@code id} or {@code name} is invalid.
+   * <strong>NOTE:</strong> Calls <a href="https://sophias-hub.github.io/docs-api/#/Templates/CreateTemplate"><code>POST /api/v1/templates</code></a> ({@code 201}).
+   * Do not send {@code id}; the service assigns one. Any {@code id} on the input object is omitted from the request body.
    */
   public NotificationTemplate createTemplate(NotificationTemplate template) {
-    return read(request("POST", "/api/v1/templates", template), NotificationTemplate.class, "Failed to create template");
+    Map<String, Object> body = new java.util.LinkedHashMap<>();
+    body.put("name", template.getName());
+    body.put("channel", template.getChannel());
+    if (template.getSubject() != null) {
+      body.put("subject", template.getSubject());
+    }
+    if (template.getBody() != null) {
+      body.put("body", template.getBody());
+    }
+    return read(request("POST", "/api/v1/templates", body), NotificationTemplate.class, "Failed to create template");
   }
 
   /**

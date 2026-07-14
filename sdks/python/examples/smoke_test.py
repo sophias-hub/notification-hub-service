@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -18,11 +17,10 @@ def main() -> int:
 
     print("Initializing Notification SDK client...")
     client = NotificationClient(api_key, base_url)
-    template_id = f"sdk-demo-{int(time.time())}"
 
     try:
         print("\n--- Create template ---")
-        created = client.create_template(template_id, "SDK Demo", "email", body="Hello {{name}}")
+        created = client.create_template("SDK Demo", "email", body="Hello {{name}}")
         print(f"Created: {created.id}")
 
         print("\n--- Retrieve template ---")

@@ -19,7 +19,7 @@ class NotificationTemplate:
     Attributes:
         id: Identifies the template in other API calls.
 
-            **NOTE**: Use lowercase letters, digits, and hyphens only (for example, ``welcome-email``).
+            **NOTE**: Assigned by the service when you create a template.
         name: Names the template for UIs and operator tools.
         channel: Defines which delivery channel this template is written for (``email``, ``sms``, or ``push``).
         subject: Sets the subject line when the channel is ``email``.
@@ -220,7 +220,6 @@ class NotificationClient:
 
     def create_template(
         self,
-        template_id: str,
         name: str,
         channel: str,
         subject: Optional[str] = None,
@@ -228,21 +227,18 @@ class NotificationClient:
     ) -> NotificationTemplate:
         """Add a new template to the catalog and return the created object.
 
-        **NOTE**: Calls `[`POST /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/CreateTemplate)` (``201``). The call fails if the ``id`` is already taken,
-        the channel is unsupported, or the ``id`` or ``name`` is invalid.
+        **NOTE**: Calls `[`POST /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/CreateTemplate)` (``201``).
+        Do not send ``id``; the service assigns one and returns it. The call fails if the channel is unsupported or the ``name`` is invalid.
 
         Raises:
             NotificationHubError: The ``code`` attribute may be one of:
 
                 * ``UNAUTHORIZED`` — send header ``X-API-Key`` with a valid key and retry.
-                * ``MISSING_FIELDS`` — include ``id``, ``name``, and ``channel``, then retry.
-                * ``TEMPLATE_ID_EXISTS`` — choose a new ``id``, or update the existing template with
-                  ``PUT`` / ``PATCH`` instead of creating.
+                * ``MISSING_FIELDS`` — include ``name`` and ``channel``, then retry.
                 * ``INVALID_CHANNEL`` — use only ``email``, ``sms``, or ``push``, then retry.
-                * ``INVALID_TEMPLATE_BODY`` — use a non-empty ``name`` and an ``id`` of lowercase letters,
-                  digits, and hyphens only, then retry.
+                * ``INVALID_TEMPLATE_BODY`` — use a non-empty ``name``, then retry.
         """
-        payload: dict[str, Any] = {"id": template_id, "name": name, "channel": channel}
+        payload: dict[str, Any] = {"name": name, "channel": channel}
         if subject is not None:
             payload["subject"] = subject
         if body is not None:

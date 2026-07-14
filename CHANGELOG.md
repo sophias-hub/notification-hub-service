@@ -13,11 +13,11 @@ Published GitHub Releases (when cut) should match the versioned sections below.
 
 ### Added
 
-- (none yet)
+- Shared OpenAPI example payloads in `src/openapi/examples.ts` (request bodies, path/query prefills, and every success and error response). Controllers reference them via `@Example` / `@Response`; `scripts/enrich-swagger-examples.ts` applies the same values so Swagger UI Try it out stays prefilled.
 
 ### Changed
 
-- (none yet)
+- `POST /api/v1/templates` assigns a unique `id` (`tpl-…`); clients no longer choose the id. List (`GET /api/v1/templates`) and get-by-id (`GET /api/v1/templates/{id}`) are unchanged. TypeScript, Java, and Python SDKs updated to match.
 
 ### Fixed
 

@@ -71,41 +71,44 @@ describe('Notification Hub API Endpoints', () => {
       expect(res.body.code).toBe('TEMPLATE_NOT_FOUND');
     });
 
-    it('POST /templates creates a template', async () => {
+    it('POST /templates creates a template with a service-assigned id', async () => {
       const res = await request(app)
         .post('/api/v1/templates')
         .set(auth)
         .send({
-          id: 'promo-email',
           name: 'Promo Email',
           channel: 'email',
           subject: 'Sale!',
           body: 'Hi {{name}}',
         });
       expect(res.status).toBe(201);
-      expect(res.body.id).toBe('promo-email');
+      expect(res.body.id).toMatch(/^tpl-[a-z0-9]+$/);
+      expect(res.body.name).toBe('Promo Email');
+      expect(res.body.channel).toBe('email');
     });
 
-    it('POST /templates returns TEMPLATE_ID_EXISTS on duplicate', async () => {
+    it('POST /templates ignores a client-supplied id', async () => {
       const res = await request(app)
         .post('/api/v1/templates')
         .set(auth)
-        .send({ id: 'welcome-email', name: 'Dup', channel: 'email' });
-      expect(res.status).toBe(409);
-      expect(res.body.code).toBe('TEMPLATE_ID_EXISTS');
+        .send({ id: 'welcome-email', name: 'Ignored Id', channel: 'email' });
+      expect(res.status).toBe(201);
+      expect(res.body.id).not.toBe('welcome-email');
+      expect(res.body.id).toMatch(/^tpl-[a-z0-9]+$/);
+      expect(res.body.name).toBe('Ignored Id');
     });
 
     it('POST /templates returns INVALID_CHANNEL', async () => {
       const res = await request(app)
         .post('/api/v1/templates')
         .set(auth)
-        .send({ id: 'bad-channel', name: 'Bad', channel: 'fax' });
+        .send({ name: 'Bad', channel: 'fax' });
       expect(res.status).toBe(422);
       expect(res.body.code).toBe('INVALID_CHANNEL');
     });
 
     it('POST /templates returns MISSING_FIELDS', async () => {
-      const res = await request(app).post('/api/v1/templates').set(auth).send({ id: 'x' });
+      const res = await request(app).post('/api/v1/templates').set(auth).send({ name: 'Only name' });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('MISSING_FIELDS');
     });
@@ -130,11 +133,12 @@ describe('Notification Hub API Endpoints', () => {
     });
 
     it('DELETE /templates/:id removes unused template', async () => {
-      await request(app)
+      const created = await request(app)
         .post('/api/v1/templates')
         .set(auth)
-        .send({ id: 'temp-delete', name: 'Temp', channel: 'sms' });
-      const res = await request(app).delete('/api/v1/templates/temp-delete').set(auth);
+        .send({ name: 'Temp', channel: 'sms' });
+      expect(created.status).toBe(201);
+      const res = await request(app).delete(`/api/v1/templates/${created.body.id}`).set(auth);
       expect(res.status).toBe(204);
     });
 
@@ -378,15 +382,16 @@ describe('Notification Hub API Endpoints', () => {
         .post('/api/v1/templates')
         .set(auth)
         .send({
-          id: 'onboarding-email',
           name: 'Onboarding',
           channel: 'email',
           body: 'Welcome {{name}}',
         });
       expect(created.status).toBe(201);
+      const templateId = created.body.id as string;
+      expect(templateId).toMatch(/^tpl-/);
 
       const retrieved = await request(app)
-        .get('/api/v1/templates/onboarding-email')
+        .get(`/api/v1/templates/${templateId}`)
         .set(auth);
       expect(retrieved.status).toBe(200);
       expect(retrieved.body.name).toBe('Onboarding');
@@ -403,7 +408,7 @@ describe('Notification Hub API Endpoints', () => {
         .send({
           recipient: 'learner@example.com',
           channel: 'email',
-          templateId: 'onboarding-email',
+          templateId,
           templateData: { name: 'Alex' },
         });
       expect(sent.status).toBe(200);

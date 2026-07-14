@@ -18,12 +18,10 @@ public final class SmokeTest {
 
     System.out.println("Initializing Notification SDK client...");
     NotificationClient client = new NotificationClient(apiKey, baseUrl);
-    String templateId = "sdk-demo-" + System.currentTimeMillis();
 
     try {
       System.out.println("\n--- Create template ---");
       NotificationTemplate template = new NotificationTemplate();
-      template.setId(templateId);
       template.setName("SDK Demo");
       template.setChannel("email");
       template.setBody("Hello {{name}}");

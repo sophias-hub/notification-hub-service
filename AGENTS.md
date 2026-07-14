@@ -86,7 +86,7 @@ There is **no** generated `routes.ts` wiring—don't assume tsoa routes run at r
 |--------|------|
 | `GET` | `/api/v1/templates` |
 | `GET` | `/api/v1/templates/{id}` |
-| `POST` | `/api/v1/templates` → `201` |
+| `POST` | `/api/v1/templates` → `201` (service assigns `id`; body needs `name` + `channel`) |
 | `PUT` / `PATCH` | `/api/v1/templates/{id}` |
 | `DELETE` | `/api/v1/templates/{id}` → `204` (`409 TEMPLATE_IN_USE` if referenced by records) |
 
@@ -139,7 +139,7 @@ Registering a URL doesn't call it. Sends append fake delivery attempts for demos
 }
 ```
 
-Stable codes include: `UNAUTHORIZED`, `MISSING_FIELDS`, `CHANNEL_OPTED_OUT`, `TEMPLATE_NOT_FOUND`, `RECORD_NOT_FOUND`, `WEBHOOK_NOT_FOUND`, `TEMPLATE_ID_EXISTS`, `TEMPLATE_IN_USE`, `INVALID_CHANNEL`, `INVALID_TEMPLATE_BODY`, `RATE_LIMITED`.
+Stable codes include: `UNAUTHORIZED`, `MISSING_FIELDS`, `CHANNEL_OPTED_OUT`, `TEMPLATE_NOT_FOUND`, `RECORD_NOT_FOUND`, `WEBHOOK_NOT_FOUND`, `TEMPLATE_IN_USE`, `INVALID_CHANNEL`, `INVALID_TEMPLATE_BODY`, `RATE_LIMITED`.
 
 Channels: `email` \| `sms` \| `push` only.
 
@@ -259,9 +259,11 @@ then keep tsoa + all three SDKs in sync. Antora how-tos embed via RapiDoc Mini�
 
 Published contracts come from **comments and tsoa metadata**, not hand-written HTML.
 
+Example payloads (request bodies, path/query prefills, success and error responses) live in **`src/openapi/examples.ts`**. Controllers import them for `@Example` / `@Response`; after `tsoa spec`, `scripts/enrich-swagger-examples.ts` stamps the same values into `docs/api/swagger.json` so Swagger UI Try it out prefills reliably (including `$ref` bodies and path params).
+
 | Surface | Author in | Skill / rule |
 |---------|-----------|--------------|
-| OpenAPI / Swagger | `src/controllers/notificationController.ts` | `.cursor/skills/write-docs/` |
+| OpenAPI / Swagger | `src/controllers/notificationController.ts` + `src/openapi/examples.ts` | `.cursor/skills/write-docs/` |
 | TypeScript SDK ref | `sdks/typescript/client.ts` | same |
 | Java SDK ref | `sdks/java/.../*.java` | same |
 | Python SDK ref | `sdks/python/src/notification_hub/client.py` | same |
@@ -271,9 +273,9 @@ Workflow (inventory → document → regen → exhaustiveness gate): invoke **`w
 
 Required in OpenAPI for each documented write (and any body with an example):
 
-1. A complete success **request** example  
+1. A complete success **request** example (add/update in `src/openapi/examples.ts`, reference from the controller)  
 2. The consecutive success **response** example that follows from it  
-3. Each error response description naming the `code` and how to investigate or fix it  
+3. Each error response with a **payload example** plus a description naming the `code` and how to investigate or fix it  
 4. Field text split into meaning + `**NOTE**:` extras, with a blank line between paragraphs so Swagger/RapiDoc render a break  
 5. Cross-referenced operations as Markdown links to `https://sophias-hub.github.io/docs-api/#/{Tag}/{operationId}` (not bare or monospace-only path text)
 

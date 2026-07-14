@@ -50,13 +50,11 @@ function newId(prefix: string): string {
 }
 
 function validateTemplateFields(body: Partial<Template>, requireAll: boolean): void {
-  const id = body.id;
   const name = body.name;
   const channel = body.channel;
 
   if (requireAll) {
     const missing: string[] = [];
-    if (!id) missing.push('id');
     if (!name) missing.push('name');
     if (!channel) missing.push('channel');
     if (missing.length) throw Errors.missingFields(missing);
@@ -69,13 +67,14 @@ function validateTemplateFields(body: Partial<Template>, requireAll: boolean): v
   if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
     throw Errors.invalidTemplateBody('Template name must be a non-empty string.', { field: 'name' });
   }
+}
 
-  if (id !== undefined && (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id))) {
-    throw Errors.invalidTemplateBody(
-      "Template id must be lowercase letters, numbers, and hyphens only.",
-      { field: 'id', id }
-    );
+function allocateTemplateId(): string {
+  let id = newId('tpl');
+  while (store.getTemplate(id)) {
+    id = newId('tpl');
   }
+  return id;
 }
 
 function channelAllowedOrThrow(recipient: string, channel: Channel): void {
@@ -133,10 +132,8 @@ app.get('/api/v1/templates/:id', authenticateApiKey, (req: Request, res: Respons
 app.post('/api/v1/templates', authenticateApiKey, (req: Request, res: Response) => {
   try {
     validateTemplateFields(req.body, true);
-    const { id, name, channel, subject, body } = req.body as Template;
-    if (store.getTemplate(id)) {
-      throw Errors.templateIdExists(id);
-    }
+    const { name, channel, subject, body } = req.body as Omit<Template, 'id'>;
+    const id = allocateTemplateId();
     const created = store.createTemplate({ id, name, channel, subject, body });
     res.status(201).json(created);
   } catch (err) {

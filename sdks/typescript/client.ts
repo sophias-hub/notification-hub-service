@@ -20,8 +20,8 @@ export interface NotificationTemplate {
   /**
    * Identifies the template in other API calls.
    *
-   * **NOTE**: Use lowercase letters, digits, and hyphens only (for example, `welcome-email`).
-   * @example 'welcome-email'
+   * **NOTE**: Assigned by the service on create. Required on responses; omit it when creating.
+   * @example 'tpl-a1b2c3d4e'
    */
   id: string;
   /**
@@ -233,16 +233,17 @@ export class NotificationClient {
   }
 
   /**
-   * Adds a new template to the catalog and returns the created object.
+   * Adds a new template to the catalog and returns the created object (including a service-assigned `id`).
    *
-   * **NOTE**: Calls [`POST /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/CreateTemplate) (`201`). The call fails if the `id` is already taken, the channel is unsupported, or the `id` or `name` is invalid. Throws an Error whose message may include:
+   * **NOTE**: Calls [`POST /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/CreateTemplate) (`201`). Do not send `id`; the service assigns one. The call fails if the channel is unsupported or the `name` is invalid. Throws an Error whose message may include:
    * `UNAUTHORIZED` — send header `X-API-Key` with a valid key and retry;
-   * `MISSING_FIELDS` — include `id`, `name`, and `channel`, then retry;
-   * `TEMPLATE_ID_EXISTS` — choose a new `id`, or update the existing template with `PUT` / `PATCH` instead of creating;
+   * `MISSING_FIELDS` — include `name` and `channel`, then retry;
    * `INVALID_CHANNEL` — use only `email`, `sms`, or `push`, then retry;
-   * `INVALID_TEMPLATE_BODY` — use a non-empty `name` and an `id` of lowercase letters, digits, and hyphens only, then retry.
+   * `INVALID_TEMPLATE_BODY` — use a non-empty `name`, then retry.
    */
-  async createTemplate(template: NotificationTemplate): Promise<NotificationTemplate> {
+  async createTemplate(
+    template: Omit<NotificationTemplate, 'id'>
+  ): Promise<NotificationTemplate> {
     return this.request<NotificationTemplate>('POST', '/api/v1/templates', template);
   }
 

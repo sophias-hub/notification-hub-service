@@ -12,8 +12,9 @@
     "docs:sdk:typescript": "typedoc",
     "docs:sdk:java": "mvn -f sdks/java -q javadoc:javadoc",
     "docs:sdk:python": "python3 -m pip install -q pdoc && PYTHONPATH=sdks/python/src python3 -m pdoc -o docs/sdk/python notification_hub",
-    "docs:api": "tsoa spec && tsx scripts/swagger-docs.ts",
-    "docs:api:site": "tsoa spec && tsx scripts/build-swagger-ui-static.ts",
+    "docs:api": "tsoa spec && tsx scripts/enrich-swagger-examples.ts && tsx scripts/swagger-docs.ts",
+    "docs:api:site": "tsoa spec && tsx scripts/enrich-swagger-examples.ts && tsx scripts/build-swagger-ui-static.ts",
+    "docs:api:spec": "tsoa spec && tsx scripts/enrich-swagger-examples.ts",
     "docs:finalize": "bash scripts/finalize-docs.sh",
     "validate": "bash scripts/validate.sh"
   },
@@ -22,8 +23,9 @@
     "docs:sdk:typescript": "TypeDoc only → docs/sdk/typescript/",
     "docs:sdk:java": "Javadoc only → docs/sdk/java/",
     "docs:sdk:python": "pdoc only → docs/sdk/python/",
-    "docs:api": "Generate OpenAPI spec and run local Swagger UI at http://localhost:8080/docs",
-    "docs:api:site": "Generate OpenAPI spec and build static Swagger UI into docs/api-site/ (set PUBLIC_API_URL for Try it out)",
+    "docs:api": "Generate OpenAPI spec (with Try it out examples) and run local Swagger UI at http://localhost:8080/docs",
+    "docs:api:site": "Generate OpenAPI spec (with Try it out examples) and build static Swagger UI into docs/api-site/ (set PUBLIC_API_URL for Try it out)",
+    "docs:api:spec": "Generate OpenAPI spec and enrich request/response examples for Swagger UI prefills",
     "docs:finalize": "Generate meta.json and inject provenance banners into docs/sdk and docs/api-site",
     "validate": "Lint Markdown prose (Vale) and check links (Lychee)"
   },

@@ -16,6 +16,41 @@ import {
   Tags,
 } from 'tsoa';
 
+import {
+  readyResponse,
+  templateList,
+  welcomeTemplate,
+  createTemplateResponse,
+  updateTemplateResponse,
+  patchTemplateResponse,
+  sendResponse,
+  deliveryRecord,
+  deliveryRecordList,
+  preferencesAllAllowed,
+  setPreferencesResponse,
+  patchPreferencesResponse,
+  unsubscribeResponse,
+  webhook,
+  webhookList,
+  webhookDeliveryList,
+  unauthorized,
+  missingFieldsTemplate,
+  missingFieldsSend,
+  missingFieldsPreferences,
+  missingFieldsUnsubscribe,
+  missingFieldsWebhook,
+  invalidChannel,
+  invalidTemplateName,
+  invalidPreferenceType,
+  invalidWebhookUrl,
+  templateNotFound,
+  templateInUse,
+  channelOptedOut,
+  rateLimited,
+  recordNotFound,
+  webhookNotFound,
+} from '../openapi/examples.js';
+
 /**
  * Defines how a notification is delivered to the recipient.
  *
@@ -38,53 +73,35 @@ export interface TemplateResponse {
   /**
    * Identifies the template in other API calls.
    *
-   * **NOTE**: Use lowercase letters, digits, and hyphens only (for example, `welcome-email`).
-   * @example "welcome-email"
+   * **NOTE**: Assigned by the service when you create a template. Use this value for retrieve, update, delete, and send.
    */
   id: string;
   /**
    * Names the template for UIs and operator tools.
-   * @example "Welcome Email Template"
    */
   name: string;
   /**
    * Defines which delivery channel this template is written for.
-   * @example "email"
    */
   channel: Channel;
   /**
    * Sets the subject line when the channel is `email`.
    *
    * **NOTE**: Other channels typically leave this empty.
-   * @example "Welcome!"
    */
   subject?: string;
   /**
    * Defines the message content that will be sent.
    *
    * **NOTE**: You can include placeholders such as `{{name}}`; they are filled from `templateData` when you call [`POST /api/v1/send`](https://sophias-hub.github.io/docs-api/#/Send/SendNotification).
-   * @example "Hello {{name}}, welcome aboard."
    */
   body?: string;
 }
 
 /**
  * Fields required to add a new template to the catalog.
- * @example {
- *  "id": "promo-email",
- *  "name": "Promo Email",
- *  "channel": "email",
- *  "subject": "This week only",
- *  "body": "Hi {{name}}, see our offer."
- * }
  */
 export interface CreateTemplateRequest {
-  /**
-   * Specifies the unique identifier for the new template.
-   *
-   * **NOTE**: It must use only lowercase letters, digits, and hyphens. If another template already uses this `id`, the API returns `409` with code `TEMPLATE_ID_EXISTS`. If the `id` is empty or has an invalid shape, the API returns `422` with code `INVALID_TEMPLATE_BODY`.
-   */
-  id: string;
   /**
    * Names the template for people reading catalogs and UIs.
    *
@@ -109,12 +126,6 @@ export interface CreateTemplateRequest {
 
 /**
  * Fields used to fully replace an existing template with a `PUT` request.
- * @example {
- *  "name": "Welcome Email Updated",
- *  "channel": "email",
- *  "subject": "Welcome aboard",
- *  "body": "Hello {{name}}."
- * }
  */
 export interface UpdateTemplateRequest {
   /**
@@ -140,9 +151,6 @@ export interface UpdateTemplateRequest {
 /**
  * Fields for a partial template update with `PATCH`.
  * Include only the properties you want to change; omitted fields stay as they are.
- * @example {
- *  "name": "Patched Welcome"
- * }
  */
 export interface PatchTemplateRequest {
   /**
@@ -167,12 +175,6 @@ export interface PatchTemplateRequest {
  * Fields required to send a notification from a template.
  *
  * **NOTE**: The service allows up to 10 successful sends in any 60-second window; beyond that it returns `429` with code `RATE_LIMITED`. If the recipient has opted out of the requested channel, the API returns `403` with code `CHANNEL_OPTED_OUT`.
- * @example {
- *  "recipient": "user@example.com",
- *  "channel": "email",
- *  "templateId": "welcome-email",
- *  "templateData": { "name": "Alex" }
- * }
  */
 export interface SendRequestPayload {
   /**
@@ -206,19 +208,16 @@ export interface SendRequestPayload {
 export interface SendResponse {
   /**
    * Reports that the send was accepted. On HTTP `200` this value is `success`.
-   * @example "success"
    */
   status: string;
   /**
    * Identifies the delivery record created for this send (for example, `rec-abc123xyz`).
    *
    * **NOTE**: Use this value with [`GET /api/v1/records/{recordId}`](https://sophias-hub.github.io/docs-api/#/Records/GetRecord) to look up status later.
-   * @example "rec-abc123xyz"
    */
   recordId: string;
   /**
    * Reports when the service accepted the send, as an ISO-8601 timestamp in UTC.
-   * @example "2026-07-13T12:00:00.000Z"
    */
   processedAt: string;
 }
@@ -292,11 +291,6 @@ export interface PreferencesResponse {
 
 /**
  * Body used to replace all preference flags for a recipient with `PUT`.
- * @example {
- *  "email": true,
- *  "sms": false,
- *  "push": false
- * }
  */
 export interface PreferencesBody {
   /**
@@ -316,9 +310,6 @@ export interface PreferencesBody {
 /**
  * Body used to change only some preference flags with `PATCH`.
  * Omit any channel you do not want to change.
- * @example {
- *  "push": false
- * }
  */
 export interface PatchPreferencesBody {
   /**
@@ -337,10 +328,6 @@ export interface PatchPreferencesBody {
 
 /**
  * Body used to opt a recipient out of a single channel.
- * @example {
- *  "recipient": "user@example.com",
- *  "channel": "sms"
- * }
  */
 export interface UnsubscribeRequest {
   /**
@@ -384,10 +371,6 @@ export interface WebhookResponse {
 
 /**
  * Fields required to register a new webhook.
- * @example {
- *  "url": "https://example.com/hooks/notifications",
- *  "events": ["record.delivered"]
- * }
  */
 export interface CreateWebhookRequest {
   /**
@@ -437,7 +420,6 @@ export interface WebhookDeliveryResponse {
 export interface ReadyResponse {
   /**
    * Reports that the process can accept API traffic. A healthy response uses the value `ready`.
-   * @example "ready"
    */
   status: string;
   /**
@@ -469,12 +451,6 @@ export interface ReadyResponse {
 
 /**
  * The standard error object returned for client and authorization failures.
- * @example {
- *  "error": "NotFound",
- *  "code": "TEMPLATE_NOT_FOUND",
- *  "message": "No template with id 'missing'.",
- *  "details": { "id": "missing" }
- * }
  */
 export interface ApiErrorResponse {
   /**
@@ -506,18 +482,11 @@ export class NotificationController extends Controller {
   @Tags('Health')
   @Security('ApiKeyAuth')
   @Get('health/ready')
-  @Example<ReadyResponse>({
-    status: 'ready',
-    store: { templates: 3, records: 0, preferences: 0, webhooks: 0, deliveries: 0 },
-  })
+  @Example<ReadyResponse>(readyResponse)
   @Response<ApiErrorResponse>(
     401,
     '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` (or your configured key) and retry.',
-    {
-      error: 'Unauthorized',
-      code: 'UNAUTHORIZED',
-      message: 'Missing or invalid X-API-Key header.',
-    }
+    unauthorized
   )
   public async getReady(): Promise<ReadyResponse> {
     return {
@@ -533,18 +502,11 @@ export class NotificationController extends Controller {
   @Tags('Templates')
   @Security('ApiKeyAuth')
   @Get('templates')
-  @Example<TemplateResponse[]>([
-    {
-      id: 'welcome-email',
-      name: 'Welcome Email Template',
-      channel: 'email',
-      subject: 'Welcome!',
-      body: 'Hello {{name}}, welcome aboard.',
-    },
-  ])
+  @Example<TemplateResponse[]>(templateList)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   public async getTemplates(): Promise<TemplateResponse[]> {
     return [
@@ -578,26 +540,16 @@ export class NotificationController extends Controller {
   @Tags('Templates')
   @Security('ApiKeyAuth')
   @Get('templates/{id}')
-  @Example<TemplateResponse>({
-    id: 'welcome-email',
-    name: 'Welcome Email Template',
-    channel: 'email',
-    subject: 'Welcome!',
-    body: 'Hello {{name}}, welcome aboard.',
-  })
+  @Example<TemplateResponse>(welcomeTemplate)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
     '`TEMPLATE_NOT_FOUND` — No template matched this `id`. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates), confirm the spelling, or create the template before retrying.',
-    {
-      error: 'NotFound',
-      code: 'TEMPLATE_NOT_FOUND',
-      message: "No template with id 'missing'.",
-      details: { id: 'missing' },
-    }
+    templateNotFound
   )
   public async getTemplate(@Path() id: string): Promise<TemplateResponse> {
     return {
@@ -610,69 +562,39 @@ export class NotificationController extends Controller {
   }
 
   /**
-   * Adds a new template to the catalog and returns the created object.
+   * Adds a new template to the catalog and returns the created object (including a service-assigned `id`).
    *
-   * **NOTE**: The call fails if the `id` is already taken, the channel is unsupported, or the `id` or `name` is invalid.
+   * **NOTE**: Do not send `id` in the body. The service assigns one. The call fails if the channel is unsupported or the `name` is invalid.
    * @summary Create template
    */
   @Tags('Templates')
   @Security('ApiKeyAuth')
   @Post('templates')
   @SuccessResponse(201, 'Created')
-  @Example<TemplateResponse>({
-    id: 'promo-email',
-    name: 'Promo Email',
-    channel: 'email',
-    subject: 'This week only',
-    body: 'Hi {{name}}, see our offer.',
-  })
+  @Example<TemplateResponse>(createTemplateResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     400,
-    '`MISSING_FIELDS` — One or more required body fields were omitted. Include `id`, `name`, and `channel`, then retry.',
-    {
-      error: 'Bad Request',
-      code: 'MISSING_FIELDS',
-      message: 'Missing required fields: name, channel.',
-      details: { fields: ['name', 'channel'] },
-    }
-  )
-  @Response<ApiErrorResponse>(
-    409,
-    '`TEMPLATE_ID_EXISTS` — A template with this `id` already exists. Choose a new `id`, or update the existing template with `PUT` / `PATCH` instead of creating.',
-    {
-      error: 'Conflict',
-      code: 'TEMPLATE_ID_EXISTS',
-      message: "A template with id 'welcome-email' already exists.",
-      details: { id: 'welcome-email' },
-    }
+    '`MISSING_FIELDS` — One or more required body fields were omitted. Include `name` and `channel`, then retry.',
+    missingFieldsTemplate
   )
   @Response<ApiErrorResponse>(
     422,
     '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.',
-    {
-      error: 'Unprocessable Entity',
-      code: 'INVALID_CHANNEL',
-      message: "Channel 'fax' is not supported. Use email, sms, or push.",
-      details: { channel: 'fax', allowed: ['email', 'sms', 'push'] },
-    }
+    invalidChannel
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_TEMPLATE_BODY` — The `id` or `name` failed validation. Use a non-empty `name` and an `id` of lowercase letters, digits, and hyphens only, then retry.',
-    {
-      error: 'Unprocessable Entity',
-      code: 'INVALID_TEMPLATE_BODY',
-      message: 'Template id must be lowercase letters, numbers, and hyphens only.',
-      details: { field: 'id', id: 'Bad_Id!' },
-    }
+    '`INVALID_TEMPLATE_BODY` — The `name` failed validation. Use a non-empty `name`, then retry.',
+    invalidTemplateName
   )
   public async createTemplate(@Body() body: CreateTemplateRequest): Promise<TemplateResponse> {
     this.setStatus(201);
-    return body;
+    return { id: 'tpl-a1b2c3d4e', ...body };
   }
 
   /**
@@ -683,28 +605,26 @@ export class NotificationController extends Controller {
   @Tags('Templates')
   @Security('ApiKeyAuth')
   @Put('templates/{id}')
-  @Example<TemplateResponse>({
-    id: 'welcome-email',
-    name: 'Welcome Email Updated',
-    channel: 'email',
-    subject: 'Welcome aboard',
-    body: 'Hello {{name}}.',
-  })
+  @Example<TemplateResponse>(updateTemplateResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     400,
-    '`MISSING_FIELDS` — Required update fields were omitted. Include `name` and `channel` in the body, then retry.'
+    '`MISSING_FIELDS` — Required update fields were omitted. Include `name` and `channel` in the body, then retry.',
+    missingFieldsTemplate
   )
   @Response<ApiErrorResponse>(
     404,
-    '`TEMPLATE_NOT_FOUND` — No template matched this path `id`. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates) and confirm the id before retrying.'
+    '`TEMPLATE_NOT_FOUND` — No template matched this path `id`. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates) and confirm the id before retrying.',
+    templateNotFound
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.'
+    '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.',
+    invalidChannel
   )
   public async updateTemplate(
     @Path() id: string,
@@ -721,24 +641,21 @@ export class NotificationController extends Controller {
   @Tags('Templates')
   @Security('ApiKeyAuth')
   @Patch('templates/{id}')
-  @Example<TemplateResponse>({
-    id: 'welcome-email',
-    name: 'Patched Welcome',
-    channel: 'email',
-    subject: 'Welcome!',
-    body: 'Hello {{name}}, welcome aboard.',
-  })
+  @Example<TemplateResponse>(patchTemplateResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
-    '`TEMPLATE_NOT_FOUND` — No template matched this path `id`. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates) and confirm the id before retrying.'
+    '`TEMPLATE_NOT_FOUND` — No template matched this path `id`. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates) and confirm the id before retrying.',
+    templateNotFound
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_TEMPLATE_BODY` — A provided field failed validation (for example an empty `name` or unsupported `channel`). Correct the field shown in `details` and retry.'
+    '`INVALID_TEMPLATE_BODY` — A provided field failed validation (for example an empty `name` or unsupported `channel`). Correct the field shown in `details` and retry.',
+    invalidTemplateName
   )
   public async patchTemplate(
     @Path() id: string,
@@ -760,22 +677,18 @@ export class NotificationController extends Controller {
   @SuccessResponse(204, 'No Content')
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
-    '`TEMPLATE_NOT_FOUND` — No template matched this `id`. It may already be deleted; list templates to confirm.'
+    '`TEMPLATE_NOT_FOUND` — No template matched this `id`. It may already be deleted; list templates to confirm.',
+    templateNotFound
   )
   @Response<ApiErrorResponse>(
     409,
     '`TEMPLATE_IN_USE` — Delivery records still reference this template. Delete or wait out those records under `/api/v1/records`, then retry the template delete.',
-    {
-      error: 'Conflict',
-      code: 'TEMPLATE_IN_USE',
-      message:
-        "Template 'welcome-email' cannot be deleted because it is referenced by recent send records.",
-      details: { id: 'welcome-email' },
-    }
+    templateInUse
   )
   public async deleteTemplate(@Path() id: string): Promise<void> {
     this.setStatus(204);
@@ -790,52 +703,36 @@ export class NotificationController extends Controller {
   @Tags('Send')
   @Security('ApiKeyAuth')
   @Post('send')
-  @Example<SendResponse>({
-    status: 'success',
-    recordId: 'rec-abc123xyz',
-    processedAt: '2026-07-13T12:00:00.000Z',
-  })
+  @Example<SendResponse>(sendResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     400,
     '`MISSING_FIELDS` — Required send fields were omitted. Include `recipient`, `channel`, and `templateId`, then retry.',
-    {
-      error: 'Bad Request',
-      code: 'MISSING_FIELDS',
-      message: 'Missing required fields: channel, templateId.',
-      details: { fields: ['channel', 'templateId'] },
-    }
+    missingFieldsSend
   )
   @Response<ApiErrorResponse>(
     403,
     '`CHANNEL_OPTED_OUT` — This recipient blocked the requested channel. Check preferences with [`GET /api/v1/preferences/{recipient}`](https://sophias-hub.github.io/docs-api/#/Preferences/GetPreferences), allow the channel with [`PUT /api/v1/preferences/{recipient}`](https://sophias-hub.github.io/docs-api/#/Preferences/SetPreferences) / [`PATCH /api/v1/preferences/{recipient}`](https://sophias-hub.github.io/docs-api/#/Preferences/PatchPreferences), or choose a different channel.',
-    {
-      error: 'Forbidden',
-      code: 'CHANNEL_OPTED_OUT',
-      message: "Recipient 'user@example.com' has opted out of channel 'email'.",
-      details: { recipient: 'user@example.com', channel: 'email' },
-    }
+    channelOptedOut
   )
   @Response<ApiErrorResponse>(
     404,
-    '`TEMPLATE_NOT_FOUND` — The `templateId` does not exist. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates) or create the template before sending.'
+    '`TEMPLATE_NOT_FOUND` — The `templateId` does not exist. List templates with [`GET /api/v1/templates`](https://sophias-hub.github.io/docs-api/#/Templates/GetTemplates) or create the template before sending.',
+    templateNotFound
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.'
+    '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.',
+    invalidChannel
   )
   @Response<ApiErrorResponse>(
     429,
     '`RATE_LIMITED` — More than 10 successful sends occurred in the last 60 seconds. Wait for the seconds in `details.retryAfterSeconds` (and honor `Retry-After`), then retry.',
-    {
-      error: 'Too Many Requests',
-      code: 'RATE_LIMITED',
-      message: 'Too many send requests. Retry after 42 seconds.',
-      details: { retryAfterSeconds: 42 },
-    }
+    rateLimited
   )
   public async sendNotification(@Body() body: SendRequestPayload): Promise<SendResponse> {
     return {
@@ -856,20 +753,11 @@ export class NotificationController extends Controller {
   @Tags('Records')
   @Security('ApiKeyAuth')
   @Get('records')
-  @Example<DeliveryRecordResponse[]>([
-    {
-      recordId: 'rec-example01',
-      recipient: 'user@example.com',
-      channel: 'email',
-      templateId: 'welcome-email',
-      status: 'delivered',
-      processedAt: '2026-07-13T12:00:00.000Z',
-      templateData: { name: 'Alex' },
-    },
-  ])
+  @Example<DeliveryRecordResponse[]>(deliveryRecordList)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   public async listRecords(
     @Query() recipient?: string,
@@ -896,28 +784,16 @@ export class NotificationController extends Controller {
   @Tags('Records')
   @Security('ApiKeyAuth')
   @Get('records/{recordId}')
-  @Example<DeliveryRecordResponse>({
-    recordId: 'rec-abc123xyz',
-    recipient: 'user@example.com',
-    channel: 'email',
-    templateId: 'welcome-email',
-    status: 'delivered',
-    processedAt: '2026-07-13T12:00:00.000Z',
-    templateData: { name: 'Alex' },
-  })
+  @Example<DeliveryRecordResponse>(deliveryRecord)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
     '`RECORD_NOT_FOUND` — No delivery record matched this `recordId`. Confirm the id from the send response, or list records with [`GET /api/v1/records`](https://sophias-hub.github.io/docs-api/#/Records/ListRecords).',
-    {
-      error: 'NotFound',
-      code: 'RECORD_NOT_FOUND',
-      message: "No record with id 'rec-missing'.",
-      details: { id: 'rec-missing' },
-    }
+    recordNotFound
   )
   public async getRecord(@Path() recordId: string): Promise<DeliveryRecordResponse> {
     return {
@@ -941,11 +817,13 @@ export class NotificationController extends Controller {
   @SuccessResponse(204, 'No Content')
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
-    '`RECORD_NOT_FOUND` — No delivery record matched this `recordId`. It may already be deleted; list records to confirm.'
+    '`RECORD_NOT_FOUND` — No delivery record matched this `recordId`. It may already be deleted; list records to confirm.',
+    recordNotFound
   )
   public async deleteRecord(@Path() recordId: string): Promise<void> {
     this.setStatus(204);
@@ -961,15 +839,11 @@ export class NotificationController extends Controller {
   @Tags('Preferences')
   @Security('ApiKeyAuth')
   @Get('preferences/{recipient}')
-  @Example<PreferencesResponse>({
-    recipient: 'user@example.com',
-    email: true,
-    sms: true,
-    push: true,
-  })
+  @Example<PreferencesResponse>(preferencesAllAllowed)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   public async getPreferences(@Path() recipient: string): Promise<PreferencesResponse> {
     return { recipient, email: true, sms: true, push: true };
@@ -983,19 +857,16 @@ export class NotificationController extends Controller {
   @Tags('Preferences')
   @Security('ApiKeyAuth')
   @Put('preferences/{recipient}')
-  @Example<PreferencesResponse>({
-    recipient: 'user@example.com',
-    email: true,
-    sms: false,
-    push: false,
-  })
+  @Example<PreferencesResponse>(setPreferencesResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     400,
-    '`MISSING_FIELDS` — Required preference flags were omitted. Include boolean `email`, `sms`, and `push`, then retry.'
+    '`MISSING_FIELDS` — Required preference flags were omitted. Include boolean `email`, `sms`, and `push`, then retry.',
+    missingFieldsPreferences
   )
   public async setPreferences(
     @Path() recipient: string,
@@ -1012,19 +883,16 @@ export class NotificationController extends Controller {
   @Tags('Preferences')
   @Security('ApiKeyAuth')
   @Patch('preferences/{recipient}')
-  @Example<PreferencesResponse>({
-    recipient: 'user@example.com',
-    email: true,
-    sms: true,
-    push: false,
-  })
+  @Example<PreferencesResponse>(patchPreferencesResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_TEMPLATE_BODY` — A preference value was not a boolean. Send only `true` or `false` for `email`, `sms`, and/or `push`, then retry.'
+    '`INVALID_TEMPLATE_BODY` — A preference value was not a boolean. Send only `true` or `false` for `email`, `sms`, and/or `push`, then retry.',
+    invalidPreferenceType
   )
   public async patchPreferences(
     @Path() recipient: string,
@@ -1046,15 +914,11 @@ export class NotificationController extends Controller {
   @Tags('Preferences')
   @Security('ApiKeyAuth')
   @Delete('preferences/{recipient}')
-  @Example<PreferencesResponse>({
-    recipient: 'user@example.com',
-    email: true,
-    sms: true,
-    push: true,
-  })
+  @Example<PreferencesResponse>(preferencesAllAllowed)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   public async resetPreferences(@Path() recipient: string): Promise<PreferencesResponse> {
     return { recipient, email: true, sms: true, push: true };
@@ -1067,23 +931,21 @@ export class NotificationController extends Controller {
   @Tags('Preferences')
   @Security('ApiKeyAuth')
   @Post('unsubscribe')
-  @Example<PreferencesResponse>({
-    recipient: 'user@example.com',
-    email: true,
-    sms: false,
-    push: true,
-  })
+  @Example<PreferencesResponse>(unsubscribeResponse)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     400,
-    '`MISSING_FIELDS` — Required unsubscribe fields were omitted. Include `recipient` and `channel`, then retry.'
+    '`MISSING_FIELDS` — Required unsubscribe fields were omitted. Include `recipient` and `channel`, then retry.',
+    missingFieldsUnsubscribe
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.'
+    '`INVALID_CHANNEL` — The `channel` value is not supported. Use only `email`, `sms`, or `push`, then retry.',
+    invalidChannel
   )
   public async unsubscribe(@Body() body: UnsubscribeRequest): Promise<PreferencesResponse> {
     return {
@@ -1104,29 +966,21 @@ export class NotificationController extends Controller {
   @Security('ApiKeyAuth')
   @Post('webhooks')
   @SuccessResponse(201, 'Created')
-  @Example<WebhookResponse>({
-    id: 'wh-example01',
-    url: 'https://example.com/hooks/notifications',
-    events: ['record.delivered'],
-    createdAt: '2026-07-13T12:00:00.000Z',
-  })
+  @Example<WebhookResponse>(webhook)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     400,
-    '`MISSING_FIELDS` — The `url` field was omitted. Provide an `http://` or `https://` callback URL, then retry.'
+    '`MISSING_FIELDS` — The `url` field was omitted. Provide an `http://` or `https://` callback URL, then retry.',
+    missingFieldsWebhook
   )
   @Response<ApiErrorResponse>(
     422,
     '`INVALID_TEMPLATE_BODY` — The `url` is not a valid `http://` or `https://` address. Correct `url` and retry.',
-    {
-      error: 'Unprocessable Entity',
-      code: 'INVALID_TEMPLATE_BODY',
-      message: 'Webhook url must be an http(s) URL.',
-      details: { field: 'url' },
-    }
+    invalidWebhookUrl
   )
   public async createWebhook(@Body() body: CreateWebhookRequest): Promise<WebhookResponse> {
     this.setStatus(201);
@@ -1145,17 +999,11 @@ export class NotificationController extends Controller {
   @Tags('Webhooks')
   @Security('ApiKeyAuth')
   @Get('webhooks')
-  @Example<WebhookResponse[]>([
-    {
-      id: 'wh-example01',
-      url: 'https://example.com/hooks/notifications',
-      events: ['record.delivered'],
-      createdAt: '2026-07-13T12:00:00.000Z',
-    },
-  ])
+  @Example<WebhookResponse[]>(webhookList)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   public async listWebhooks(): Promise<WebhookResponse[]> {
     return [
@@ -1175,18 +1023,11 @@ export class NotificationController extends Controller {
   @Tags('Webhooks')
   @Security('ApiKeyAuth')
   @Get('webhooks/deliveries')
-  @Example<WebhookDeliveryResponse[]>([
-    {
-      id: 'del-example01',
-      webhookId: 'wh-example01',
-      recordId: 'rec-example01',
-      status: 'delivered',
-      attemptedAt: '2026-07-13T12:00:00.000Z',
-    },
-  ])
+  @Example<WebhookDeliveryResponse[]>(webhookDeliveryList)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   public async listWebhookDeliveries(): Promise<WebhookDeliveryResponse[]> {
     return [
@@ -1208,25 +1049,16 @@ export class NotificationController extends Controller {
   @Tags('Webhooks')
   @Security('ApiKeyAuth')
   @Get('webhooks/{id}')
-  @Example<WebhookResponse>({
-    id: 'wh-example01',
-    url: 'https://example.com/hooks/notifications',
-    events: ['record.delivered'],
-    createdAt: '2026-07-13T12:00:00.000Z',
-  })
+  @Example<WebhookResponse>(webhook)
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
     '`WEBHOOK_NOT_FOUND` — No webhook matched this `id`. List webhooks with [`GET /api/v1/webhooks`](https://sophias-hub.github.io/docs-api/#/Webhooks/ListWebhooks), or create one before looking it up.',
-    {
-      error: 'NotFound',
-      code: 'WEBHOOK_NOT_FOUND',
-      message: "No webhook with id 'wh-missing'.",
-      details: { id: 'wh-missing' },
-    }
+    webhookNotFound
   )
   public async getWebhook(@Path() id: string): Promise<WebhookResponse> {
     return {
@@ -1248,11 +1080,13 @@ export class NotificationController extends Controller {
   @SuccessResponse(204, 'No Content')
   @Response<ApiErrorResponse>(
     401,
-    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.'
+    '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
+    unauthorized
   )
   @Response<ApiErrorResponse>(
     404,
-    '`WEBHOOK_NOT_FOUND` — No webhook matched this `id`. It may already be deleted; list webhooks to confirm.'
+    '`WEBHOOK_NOT_FOUND` — No webhook matched this `id`. It may already be deleted; list webhooks to confirm.',
+    webhookNotFound
   )
   public async deleteWebhook(@Path() id: string): Promise<void> {
     this.setStatus(204);
