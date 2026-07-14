@@ -328,14 +328,22 @@ export class NotificationClient {
 
   /**
    * @deprecated Prefer {@link sendNotification}.
-   * Sends through the legacy path by using template id `legacy-raw-template` and `{ body: rawMessage }`.
+   * Convenience wrapper that sends through the seeded template for `channel`
+   * (`welcome-email`, `otp-sms`, or `payment-push`) with common placeholder keys set to `rawMessage`.
    */
   async send(
     recipient: string,
     channel: Channel,
     rawMessage: string
   ): Promise<NotificationResponse> {
-    return this.sendNotification(recipient, channel, 'legacy-raw-template', { body: rawMessage });
+    const templateId =
+      channel === 'sms' ? 'otp-sms' : channel === 'push' ? 'payment-push' : 'welcome-email';
+    return this.sendNotification(recipient, channel, templateId, {
+      body: rawMessage,
+      name: rawMessage,
+      code: rawMessage,
+      amount: rawMessage,
+    });
   }
 
   /**

@@ -106,7 +106,8 @@ jobs:
 
       - run: npm ci
       - run: npm test
-      - run: npx tsoa spec && npx swagger-cli validate docs/api/swagger.json
+      - run: npm run docs:api:spec
+      - run: npx swagger-cli validate docs/api/swagger.json
       - run: npm run docs:sdk
       - name: Build API docs site
         env:

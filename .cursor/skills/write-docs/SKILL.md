@@ -189,7 +189,7 @@ For **each** route in `notificationController.ts`:
 6. **Paired examples (required for Swagger / RapiDoc Try it out):**
    - Every request body (or meaningful query/path demo) that has an example **must** also have a matching **success response example** for that same happy path (use interface `@example` for the request and `@Example` / success response examples for the consecutive response).
    - Mutating routes (`POST`/`PUT`/`PATCH`, including `/send` and `/unsubscribe`): at least one complete valid success request **and** the response that follows from it.
-   - Add failure/edge response examples when they clarify the contract (`MISSING_FIELDS`, `CHANNEL_OPTED_OUT`, `TEMPLATE_ID_EXISTS`, `TEMPLATE_IN_USE`, `RATE_LIMITED`, not-found, and so on), each with troubleshooting text in the `@Response` description.
+   - Add failure/edge response examples when they clarify the contract (`MISSING_FIELDS`, `CHANNEL_OPTED_OUT`, `TEMPLATE_IN_USE`, `RATE_LIMITED`, not-found, and so on), each with troubleshooting text in the `@Response` description.
    - Use tsoa/OpenAPI example mechanisms so generated `swagger.json` exposes them—Antora RapiDoc Mini embeds consume the published spec.
 
 Document these facts wherever they apply:

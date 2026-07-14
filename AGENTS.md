@@ -40,7 +40,7 @@ Demo auth (hardcoded everywhere): header `X-API-Key: secure-token-123`.
 | API docs UI | Swagger UI (`docs:api`, `docs:api:site`) |
 | Containers | `Dockerfile`, `docker-compose.yml` |
 | Hosting blueprint | `render.yaml` (`GET /health`) |
-| Prose/links | Vale + Lychee (`npm run validate`) |
+| Validation | `npm run validate` (markdownlint, Vale, Lychee); full pre-PR: `npm run pre-pr` |
 
 ---
 
@@ -122,8 +122,8 @@ Registering a URL doesn't call it. Sends append fake delivery attempts for demos
 
 **Ops**
 
-| Method | Path |
-|--------|------|
+| Method | Path | Purpose |
+|--------|------|---------|
 | `GET` | `/api/v1/health/ready` | Readiness + store counts |
 
 **Rate limit:** 10 sends / 60s window → `429 RATE_LIMITED` + `Retry-After`.
@@ -194,8 +194,9 @@ Learning-path flow to cover in smokes: **create template → retrieve → set pr
 On push to **`main`**, CI builds and deploys API + SDK sites (deploy keys / secrets). Local:
 
 ```bash
-npm test
-npx tsoa spec && npx swagger-cli validate docs/api/swagger.json
+npm run validate         # markdownlint + Vale + Lychee (no tests)
+npm run pre-pr           # local CI PR mirror (validate + tests + docs)
+npm run docs:api:spec    # regenerate + enrich OpenAPI
 npm run docs:api:site    # needs PUBLIC_API_URL for remote Try it out
 npm run docs:sdk
 npm run docs:finalize
@@ -218,12 +219,14 @@ Hub RapiDoc embeds read the **published** `docs-api` swagger URL—they stay sta
 ```bash
 npm install
 npm start                 # :3000
-npm test
+npm run validate          # markdownlint + Vale + Lychee (no tests)
+npm run pre-pr            # local CI PR mirror (validate + tests + docs)
+npm test                  # API tests
 npm run test:sdk          # needs API up
+npm run docs:api:spec     # regenerate OpenAPI after API/docs source changes
 npm run docs:api          # spec + Swagger UI :8080
 npm run docs:api:site
 npm run docs:sdk
-npm run validate          # Vale + Lychee on Markdown
 docker-compose up --build
 ```
 
@@ -236,22 +239,23 @@ docker-compose up --build
 3. Use **`records` / `recordId`**, never revive `/messages` / `messageId` for send tracking.
 4. Keep CORS methods aligned with verbs you add (`GET/POST/PUT/PATCH/DELETE`).
 5. Record user-visible changes under **`## [Unreleased]`** in `CHANGELOG.md` (move into a versioned section when cutting a release).
-5. Don't commit secrets, deploy private keys, or `.env` with real credentials.
-6. Don't invent production features (queues, OAuth, real providers) unless explicitly asked.
-7. Work on a feature branch / `working-branch`; open PRs—avoid silent pushes to `main`.
-8. After API shape changes, regenerate and validate OpenAPI before finishing.
-9. Guide prose lives in the **`docs`** repo; this repo owns contracts + SDK reference generation.
-10. Author Markdown to Vale + Lychee standards (see below). Run `npm run validate` (or the `validate-and-fix` skill) before commit or push; fix failures—don't skip checks.
-11. When documenting API/SDK reference surfaces, follow `.cursor/rules/api-sdk-docs.mdc` and the `write-docs` skill:
-- every exposed endpoint, class, method, and field gets a human-readable full-sentence description (no schema echo);
-**verb-led** text for fields that alter results;
-**monospace** for field names, literals, codes, and placeholders;
-**hyperlink** HTTP operations to published Swagger deep links (`https://sophias-hub.github.io/docs-api/#/{Tag}/{operationId}`), for example [`POST /api/v1/send`](https://sophias-hub.github.io/docs-api/#/Send/SendNotification);
-split fields into description + `**NOTE**:` (constraints/scenarios; Java: `<strong>NOTE:</strong>`);
-CommonMark **paragraph breaks** (blank comment line) or hard breaks (`\`)—do not rely on single newlines;
-**paired request + success response examples**;
-every error `@Response` includes **troubleshooting**;
-then keep tsoa + all three SDKs in sync. Antora how-tos embed via RapiDoc Mini—do not write Antora narratives here.
+6. Don't commit secrets, deploy private keys, or `.env` with real credentials.
+7. Don't invent production features (queues, OAuth, real providers) unless explicitly asked.
+8. Work on a feature branch / `working-branch`; open PRs—avoid silent pushes to `main`.
+9. After API shape changes, regenerate and validate OpenAPI before finishing.
+10. Guide prose lives in the **`docs`** repo; this repo owns contracts + SDK reference generation.
+11. Author Markdown to markdownlint + Vale + Lychee standards (see below). Run `npm run validate` (or the `validate-and-fix` skill) before commit or push; fix failures—don't skip checks.
+12. When documenting API/SDK reference surfaces, follow `.cursor/rules/api-sdk-docs.mdc` and the `write-docs` skill:
+
+    - every exposed endpoint, class, method, and field gets a human-readable full-sentence description (no schema echo);
+    - **verb-led** text for fields that alter results;
+    - **monospace** for field names, literals, codes, and placeholders;
+    - **hyperlink** HTTP operations to published Swagger deep links (`https://sophias-hub.github.io/docs-api/#/{Tag}/{operationId}`), for example [`POST /api/v1/send`](https://sophias-hub.github.io/docs-api/#/Send/SendNotification);
+    - split fields into description + `**NOTE**:` (constraints/scenarios; Java: `<strong>NOTE:</strong>`);
+    - CommonMark **paragraph breaks** (blank comment line) or hard breaks (`\`)—do not rely on single newlines;
+    - **paired request + success response examples**;
+    - every error `@Response` includes **troubleshooting**;
+    - then keep tsoa + all three SDKs in sync. Antora how-tos embed via RapiDoc Mini—do not write Antora narratives here.
 
 ---
 
@@ -281,9 +285,21 @@ Required in OpenAPI for each documented write (and any body with an example):
 
 ---
 
-## Markdown (Vale + Lychee)
+## Validation (`npm run validate`)
 
-Human-authored `*.md` in this repo must pass `npm run validate` (CI runs the same). Generated trees `docs/sdk/` and `docs/api-site/` are excluded.
+One command runs local/CI Markdown checks (see `scripts/validate.sh`) **without tests or docs builds**:
+
+1. markdownlint (Markdown structure)
+2. Vale (Microsoft prose style on `*.md`)
+3. Lychee (Markdown links)
+
+API tests: `npm test`. Local CI PR mirror (validate + tests + OpenAPI + docs builds): `npm run pre-pr` (`scripts/pre-pr.sh`). Skips main-only publish jobs.
+
+Generated trees `docs/sdk/` and `docs/api-site/` are excluded from Markdown checks. Use `npm run lint:md` only when you want structure lint without the rest.
+
+### markdownlint (structure)
+
+Config: `.markdownlint.json`.
 
 ### Vale (Microsoft style on `*.md`)
 
@@ -304,10 +320,11 @@ Config: `.lychee.toml`. All Markdown links must resolve unless excluded there.
 - Localhost example URLs are already excluded; don't add broad excludes to hide real failures.
 - Language SDK Pages paths under `docs-sdk/{typescript,java,python}/` are excluded until first publish—don't "fix" those by inventing live pages.
 
-### Before finishing Markdown work
+### Before finishing
 
 ```bash
-npm run validate
+npm run validate   # Markdown / prose / links
+npm run pre-pr     # Full checks before opening a PR
 ```
 
 Or invoke the project skill `.cursor/skills/validate-and-fix/` to run validate, apply fixes, and re-run until clean.

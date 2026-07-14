@@ -16,7 +16,9 @@
     "docs:api:site": "tsoa spec && tsx scripts/enrich-swagger-examples.ts && tsx scripts/build-swagger-ui-static.ts",
     "docs:api:spec": "tsoa spec && tsx scripts/enrich-swagger-examples.ts",
     "docs:finalize": "bash scripts/finalize-docs.sh",
-    "validate": "bash scripts/validate.sh"
+    "lint:md": "markdownlint \"**/*.md\" --ignore node_modules --ignore docs/sdk --ignore docs/api-site --ignore .cursor --ignore .vale",
+    "validate": "bash scripts/validate.sh",
+    "pre-pr": "bash scripts/pre-pr.sh"
   },
   "scriptsComments": {
     "docs:sdk": "Build TypeScript/Java/Python SDK reference sites into docs/sdk/{typescript,java,python}/ plus index",
@@ -27,7 +29,9 @@
     "docs:api:site": "Generate OpenAPI spec (with Try it out examples) and build static Swagger UI into docs/api-site/ (set PUBLIC_API_URL for Try it out)",
     "docs:api:spec": "Generate OpenAPI spec and enrich request/response examples for Swagger UI prefills",
     "docs:finalize": "Generate meta.json and inject provenance banners into docs/sdk and docs/api-site",
-    "validate": "Lint Markdown prose (Vale) and check links (Lychee)"
+    "lint:md": "Lint Markdown structure with markdownlint-cli (also part of validate)",
+    "validate": "Run checks: markdownlint, Vale, and Lychee (no API tests or docs / OpenAPI builds)",
+    "pre-pr": "Local mirror of CI PR jobs (validate + test-and-build-docs); skips main-only publish"
   },
   "repository": {
     "type": "git",
@@ -50,6 +54,7 @@
     "tsoa": "^7.0.0-alpha.0"
   },
   "devDependencies": {
+    "@apidevtools/swagger-cli": "^4.0.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
@@ -59,6 +64,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "jest": "^30.4.2",
+    "markdownlint-cli": "^0.45.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
@@ -67,7 +73,6 @@
     "typedoc-rhineai-theme": "^1.2.0",
     "typedoc-theme-fresh": "^0.2.3",
     "typedoc-theme-hierarchy": "^6.0.0",
-    "typescript": "^6.0.3",
-    "@apidevtools/swagger-cli": "^4.0.4"
+    "typescript": "^6.0.3"
   }
 }

@@ -5,15 +5,27 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+CURRENT_STEP="docs:sdk"
+
+on_err() {
+  local code=$?
+  echo "❌ ${CURRENT_STEP} failed (exit ${code})"
+  exit "${code}"
+}
+trap on_err ERR
+
 OUT_ROOT="docs/sdk"
 mkdir -p "$OUT_ROOT"
 
-echo "==> TypeScript (TypeDoc) → ${OUT_ROOT}/typescript"
+CURRENT_STEP="TypeScript (TypeDoc)"
+echo "▶️  ${CURRENT_STEP} → ${OUT_ROOT}/typescript"
 npx typedoc
+echo "✅ ${CURRENT_STEP}"
 
-echo "==> Java (Javadoc) → ${OUT_ROOT}/java"
+CURRENT_STEP="Java (Javadoc)"
+echo "▶️  ${CURRENT_STEP} → ${OUT_ROOT}/java"
 if ! command -v mvn >/dev/null 2>&1; then
-  echo "Missing required command: mvn (Maven)"
+  echo "❌ Missing required command: mvn (Maven)"
   exit 1
 fi
 rm -rf "${OUT_ROOT}/java"
@@ -26,24 +38,28 @@ if [[ -f "${OUT_ROOT}/java/apidocs/index.html" && ! -f "${OUT_ROOT}/java/index.h
   shopt -u dotglob nullglob
 fi
 if [[ ! -f "${OUT_ROOT}/java/index.html" ]]; then
-  echo "Javadoc did not produce ${OUT_ROOT}/java/index.html"
+  echo "❌ Javadoc did not produce ${OUT_ROOT}/java/index.html"
   echo "Contents of ${OUT_ROOT}:"
   find "${OUT_ROOT}" -maxdepth 3 -type f | head -50
   echo "Maven target apidocs (if any):"
   find sdks/java/target -type f -name 'index.html' 2>/dev/null | head -20
   exit 1
 fi
+echo "✅ ${CURRENT_STEP}"
 
-echo "==> Python (pdoc) → ${OUT_ROOT}/python"
+CURRENT_STEP="Python (pdoc)"
+echo "▶️  ${CURRENT_STEP} → ${OUT_ROOT}/python"
 if ! command -v python3 >/dev/null 2>&1; then
-  echo "Missing required command: python3"
+  echo "❌ Missing required command: python3"
   exit 1
 fi
 python3 -m pip install -q pdoc
 PYTHONPATH="sdks/python/src${PYTHONPATH:+:$PYTHONPATH}" \
   python3 -m pdoc -o "${OUT_ROOT}/python" notification_hub
+echo "✅ ${CURRENT_STEP}"
 
-echo "==> SDK docs index → ${OUT_ROOT}/index.html"
+CURRENT_STEP="SDK docs index"
+echo "▶️  ${CURRENT_STEP} → ${OUT_ROOT}/index.html"
 cp "${ROOT}/scripts/sdk-docs-index.html" "${OUT_ROOT}/index.html"
 cp "${ROOT}/docs/brand/favicon.png" "${OUT_ROOT}/favicon.png"
 cp "${ROOT}/docs/brand/favicon.svg" "${OUT_ROOT}/favicon.svg"
@@ -54,6 +70,7 @@ for lang in typescript java python; do
     cp "${ROOT}/docs/brand/favicon.svg" "${OUT_ROOT}/${lang}/favicon.svg"
   fi
 done
+echo "✅ ${CURRENT_STEP}"
 
 # Brand language SDK pages (titles + favicons). Favicons are copied above.
 brand_sdk_html() {
@@ -61,7 +78,8 @@ brand_sdk_html() {
   local title="$2"
   local dir="${OUT_ROOT}/${lang}"
   [[ -d "$dir" ]] || return 0
-  echo "==> Brand ${lang} SDK page titles + favicon"
+  CURRENT_STEP="Brand ${lang} SDK pages"
+  echo "▶️  ${CURRENT_STEP}"
   TITLE="$title" DIR="$dir" python3 - <<'PY'
 from pathlib import Path
 import os
@@ -87,16 +105,19 @@ for html in root.rglob("*.html"):
     if text != orig:
         html.write_text(text, encoding="utf-8")
 PY
+  echo "✅ ${CURRENT_STEP}"
 }
 
 brand_sdk_html typescript "TypeScript SDK Docs | Notification Hub Service"
 brand_sdk_html java "Java SDK Docs | Notification Hub Service"
 brand_sdk_html python "Python SDK Docs | Notification Hub Service"
 
-echo "==> Apply Java Javadoc theme (bake into stylesheet.css)"
+CURRENT_STEP="Java Javadoc theme"
+echo "▶️  ${CURRENT_STEP}"
 chmod +x "${ROOT}/scripts/apply-java-javadoc-theme.sh"
 "${ROOT}/scripts/apply-java-javadoc-theme.sh" \
   "${OUT_ROOT}/java" \
   "${ROOT}/sdks/java/src/main/javadoc/modern-theme.css"
+echo "✅ ${CURRENT_STEP}"
 
-echo "SDK docs built under ${OUT_ROOT}/"
+echo "✅ SDK docs built under ${OUT_ROOT}/"

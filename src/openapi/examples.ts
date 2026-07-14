@@ -66,6 +66,39 @@ export const invalidTemplateName = {
   details: { field: 'name' },
 };
 
+export const channelTemplateMismatch = {
+  error: 'Unprocessable Entity',
+  code: 'INVALID_TEMPLATE_BODY',
+  message:
+    "Template 'otp-sms' is for channel 'sms', but the send requested 'email'.",
+  details: {
+    templateId: 'otp-sms',
+    templateChannel: 'sms',
+    channel: 'email',
+  },
+};
+
+export const invalidRecordStatus = {
+  error: 'Unprocessable Entity',
+  code: 'INVALID_TEMPLATE_BODY',
+  message: "Status 'bogus' is not supported. Use queued, delivered, or failed.",
+  details: { status: 'bogus', allowed: ['queued', 'delivered', 'failed'] },
+};
+
+export const patchTemplateIdMismatch = {
+  error: 'Unprocessable Entity',
+  code: 'INVALID_TEMPLATE_BODY',
+  message: 'Template id in body must match the path id.',
+  details: { pathId: 'welcome-email', bodyId: 'other-id' },
+};
+
+export const invalidWebhookEvents = {
+  error: 'Unprocessable Entity',
+  code: 'INVALID_TEMPLATE_BODY',
+  message: 'Webhook events must be a non-empty array of event name strings.',
+  details: { field: 'events' },
+};
+
 export const invalidPreferenceType = {
   error: 'Unprocessable Entity',
   code: 'INVALID_TEMPLATE_BODY',
@@ -379,7 +412,13 @@ export const ERROR_EXAMPLES: Record<string, Record<string, ErrorStatusExample>> 
   PatchTemplate: {
     '401': { body: unauthorized },
     '404': { body: templateNotFound },
-    '422': { body: invalidTemplateName },
+    '422': {
+      body: invalidTemplateName,
+      named: {
+        INVALID_TEMPLATE_BODY: invalidTemplateName,
+        ID_MISMATCH: patchTemplateIdMismatch,
+      },
+    },
   },
   DeleteTemplate: {
     '401': { body: unauthorized },
@@ -391,11 +430,18 @@ export const ERROR_EXAMPLES: Record<string, Record<string, ErrorStatusExample>> 
     '400': { body: missingFieldsSend },
     '403': { body: channelOptedOut },
     '404': { body: templateNotFound },
-    '422': { body: invalidChannel },
+    '422': {
+      body: invalidChannel,
+      named: {
+        INVALID_CHANNEL: invalidChannel,
+        CHANNEL_TEMPLATE_MISMATCH: channelTemplateMismatch,
+      },
+    },
     '429': { body: rateLimited },
   },
   ListRecords: {
     '401': { body: unauthorized },
+    '422': { body: invalidRecordStatus },
   },
   GetRecord: {
     '401': { body: unauthorized },
@@ -427,7 +473,13 @@ export const ERROR_EXAMPLES: Record<string, Record<string, ErrorStatusExample>> 
   CreateWebhook: {
     '401': { body: unauthorized },
     '400': { body: missingFieldsWebhook },
-    '422': { body: invalidWebhookUrl },
+    '422': {
+      body: invalidWebhookUrl,
+      named: {
+        INVALID_URL: invalidWebhookUrl,
+        INVALID_EVENTS: invalidWebhookEvents,
+      },
+    },
   },
   ListWebhooks: {
     '401': { body: unauthorized },

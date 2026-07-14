@@ -9,11 +9,13 @@ A lightweight REST API that simulates a notification dispatch system—supportin
 ## Getting Started
 
 **With Docker (recommended):**
+
 ```bash
 docker-compose up --build
 ```
 
 **Without Docker:**
+
 ```bash
 npm install && npm start
 ```
@@ -29,6 +31,7 @@ curl -H "X-API-Key: secure-token-123" http://localhost:3000/api/v1/templates
 ```
 
 Expected response:
+
 ```json
 [
   { "id": "welcome-email", "name": "Welcome Email Template", "channel": "email" },
@@ -36,6 +39,7 @@ Expected response:
   { "id": "payment-push", "name": "Payment Success Push Notification", "channel": "push" }
 ]
 ```
+
 ---
 
 ## Local development scripts
@@ -66,19 +70,23 @@ open docs/sdk/index.html
 open docs/api-site/index.html
 ```
 
-### Validate (prose + links)
+### Validate and pre-PR checks
 
 | Command | What it does |
 |---------|----------------|
-| `npm run validate` | Lint all `*.md` with Vale and check links with Lychee |
+| `npm run validate` | Checks: markdownlint, Vale, and Lychee (no API tests or docs builds) |
+| `npm test` | API integration tests (Jest + Supertest) |
+| `npm run pre-pr` | Local mirror of CI PR jobs (`validate` + `test-and-build-docs`); skips main-only publish |
+| `npm run lint:md` | Markdown structure only (also included in `validate`) |
 
 **Prerequisites** (install once):
 
 ```bash
 brew install vale lychee
+npm ci
 ```
 
-On push to `main`, CI runs tests, builds docs, validates Markdown, and publishes to the `docs-sdk` and `docs-api` repos.
+Before opening a PR, run `npm run pre-pr`. On push to `main`, CI runs the same checks, builds docs, and publishes to the `docs-sdk` and `docs-api` repos.
 
 ---
 

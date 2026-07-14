@@ -43,6 +43,10 @@ import {
   invalidTemplateName,
   invalidPreferenceType,
   invalidWebhookUrl,
+  invalidWebhookEvents,
+  channelTemplateMismatch,
+  invalidRecordStatus,
+  patchTemplateIdMismatch,
   templateNotFound,
   templateInUse,
   channelOptedOut,
@@ -654,8 +658,13 @@ export class NotificationController extends Controller {
   )
   @Response<ApiErrorResponse>(
     422,
-    '`INVALID_TEMPLATE_BODY` — A provided field failed validation (for example an empty `name` or unsupported `channel`). Correct the field shown in `details` and retry.',
+    '`INVALID_TEMPLATE_BODY` — A provided field failed validation (for example an empty `name`, unsupported `channel`, or a body `id` that does not match the path). Correct the field shown in `details` and retry.',
     invalidTemplateName
+  )
+  @Response<ApiErrorResponse>(
+    422,
+    '`INVALID_TEMPLATE_BODY` — The body included an `id` that does not match the path `id`. Omit `id` from the patch body, or make it match the path, then retry.',
+    patchTemplateIdMismatch
   )
   public async patchTemplate(
     @Path() id: string,
@@ -697,7 +706,7 @@ export class NotificationController extends Controller {
   /**
    * Accepts a notification send, creates a delivery record, and returns the new `recordId`.
    *
-   * **NOTE**: Before accepting the request, the service checks preferences, that the template exists, that the channel is valid, and that you are within the send rate limit.
+   * **NOTE**: Before accepting the request, the service checks preferences, that the template exists, that the send `channel` matches the template's channel, that the channel is valid, and that you are within the send rate limit.
    * @summary Send notification
    */
   @Tags('Send')
@@ -730,6 +739,11 @@ export class NotificationController extends Controller {
     invalidChannel
   )
   @Response<ApiErrorResponse>(
+    422,
+    '`INVALID_TEMPLATE_BODY` — The send `channel` does not match the template\'s channel. Use a template written for that channel (or change `channel`), then retry.',
+    channelTemplateMismatch
+  )
+  @Response<ApiErrorResponse>(
     429,
     '`RATE_LIMITED` — More than 10 successful sends occurred in the last 60 seconds. Wait for the seconds in `details.retryAfterSeconds` (and honor `Retry-After`), then retry.',
     rateLimited
@@ -758,6 +772,11 @@ export class NotificationController extends Controller {
     401,
     '`UNAUTHORIZED` — Missing or invalid API key. Send header `X-API-Key` with demo value `secure-token-123` and retry.',
     unauthorized
+  )
+  @Response<ApiErrorResponse>(
+    422,
+    '`INVALID_TEMPLATE_BODY` — The `status` query value is not supported. Use only `queued`, `delivered`, or `failed`, then retry.',
+    invalidRecordStatus
   )
   public async listRecords(
     @Query() recipient?: string,
@@ -898,11 +917,12 @@ export class NotificationController extends Controller {
     @Path() recipient: string,
     @Body() body: PatchPreferencesBody
   ): Promise<PreferencesResponse> {
+    // Docs stub: omitted flags keep prior values (defaults when unset).
     return {
       recipient,
       email: body.email ?? true,
       sms: body.sms ?? true,
-      push: body.push ?? true,
+      push: body.push ?? false,
     };
   }
 
@@ -948,6 +968,7 @@ export class NotificationController extends Controller {
     invalidChannel
   )
   public async unsubscribe(@Body() body: UnsubscribeRequest): Promise<PreferencesResponse> {
+    // Docs stub: only the requested channel is turned off; other flags stay as stored/default.
     return {
       recipient: body.recipient,
       email: body.channel === 'email' ? false : true,
@@ -959,7 +980,7 @@ export class NotificationController extends Controller {
   /**
    * Registers a webhook URL so the mock can associate later [`POST /api/v1/send`](https://sophias-hub.github.io/docs-api/#/Send/SendNotification) calls with that endpoint.
    *
-   * **NOTE**: The service records fake delivery attempts for practice; it does not call the URL.
+   * **NOTE**: The service records fake delivery attempts for practice when a send completes and the webhook subscribes to `record.delivered`; it does not call the URL.
    * @summary Create webhook
    */
   @Tags('Webhooks')
@@ -981,6 +1002,11 @@ export class NotificationController extends Controller {
     422,
     '`INVALID_TEMPLATE_BODY` — The `url` is not a valid `http://` or `https://` address. Correct `url` and retry.',
     invalidWebhookUrl
+  )
+  @Response<ApiErrorResponse>(
+    422,
+    '`INVALID_TEMPLATE_BODY` — The `events` value was not a non-empty string array. Omit `events` to default to `["record.delivered"]`, or pass a valid array, then retry.',
+    invalidWebhookEvents
   )
   public async createWebhook(@Body() body: CreateWebhookRequest): Promise<WebhookResponse> {
     this.setStatus(201);

@@ -113,6 +113,24 @@ describe('Notification Hub API Endpoints', () => {
       expect(res.body.code).toBe('MISSING_FIELDS');
     });
 
+    it('POST /templates returns INVALID_TEMPLATE_BODY for empty name', async () => {
+      const res = await request(app)
+        .post('/api/v1/templates')
+        .set(auth)
+        .send({ name: '', channel: 'email' });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('INVALID_TEMPLATE_BODY');
+    });
+
+    it('POST /templates returns INVALID_TEMPLATE_BODY for whitespace-only name', async () => {
+      const res = await request(app)
+        .post('/api/v1/templates')
+        .set(auth)
+        .send({ name: '   ', channel: 'email' });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('INVALID_TEMPLATE_BODY');
+    });
+
     it('PUT /templates/:id replaces a template', async () => {
       const res = await request(app)
         .put('/api/v1/templates/welcome-email')
@@ -200,6 +218,15 @@ describe('Notification Hub API Endpoints', () => {
       expect(res.body.code).toBe('TEMPLATE_NOT_FOUND');
     });
 
+    it('returns INVALID_TEMPLATE_BODY when channel does not match template', async () => {
+      const res = await request(app)
+        .post('/api/v1/send')
+        .set(auth)
+        .send({ recipient: 'user@example.com', channel: 'email', templateId: 'otp-sms' });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('INVALID_TEMPLATE_BODY');
+    });
+
     it('returns RATE_LIMITED after too many sends', async () => {
       for (let i = 0; i < 10; i++) {
         await request(app)
@@ -251,6 +278,15 @@ describe('Notification Hub API Endpoints', () => {
       expect(res.body.length).toBe(1);
     });
 
+    it('GET /records returns INVALID_TEMPLATE_BODY for unknown status', async () => {
+      const res = await request(app)
+        .get('/api/v1/records')
+        .query({ status: 'bogus' })
+        .set(auth);
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('INVALID_TEMPLATE_BODY');
+    });
+
     it('DELETE /records/:id removes a record', async () => {
       const send = await request(app)
         .post('/api/v1/send')
@@ -270,11 +306,14 @@ describe('Notification Hub API Endpoints', () => {
   });
 
   describe('Preferences', () => {
+    const recipient = 'new@user.com';
+    const recipientPath = `/api/v1/preferences/${encodeURIComponent(recipient)}`;
+
     it('GET returns defaults when unset', async () => {
-      const res = await request(app).get('/api/v1/preferences/new@user.com').set(auth);
+      const res = await request(app).get(recipientPath).set(auth);
       expect(res.status).toBe(200);
       expect(res.body).toEqual({
-        recipient: 'new@user.com',
+        recipient,
         email: true,
         sms: true,
         push: true,
@@ -283,7 +322,7 @@ describe('Notification Hub API Endpoints', () => {
 
     it('PUT replaces preferences', async () => {
       const res = await request(app)
-        .put('/api/v1/preferences/new@user.com')
+        .put(recipientPath)
         .set(auth)
         .send({ email: true, sms: false, push: true });
       expect(res.status).toBe(200);
@@ -292,13 +331,10 @@ describe('Notification Hub API Endpoints', () => {
 
     it('PATCH partially updates preferences', async () => {
       await request(app)
-        .put('/api/v1/preferences/new@user.com')
+        .put(recipientPath)
         .set(auth)
         .send({ email: true, sms: true, push: true });
-      const res = await request(app)
-        .patch('/api/v1/preferences/new@user.com')
-        .set(auth)
-        .send({ push: false });
+      const res = await request(app).patch(recipientPath).set(auth).send({ push: false });
       expect(res.status).toBe(200);
       expect(res.body.push).toBe(false);
       expect(res.body.email).toBe(true);
@@ -306,12 +342,17 @@ describe('Notification Hub API Endpoints', () => {
 
     it('DELETE resets to defaults', async () => {
       await request(app)
-        .put('/api/v1/preferences/new@user.com')
+        .put(recipientPath)
         .set(auth)
         .send({ email: false, sms: false, push: false });
-      const res = await request(app).delete('/api/v1/preferences/new@user.com').set(auth);
+      const res = await request(app).delete(recipientPath).set(auth);
       expect(res.status).toBe(200);
-      expect(res.body.email).toBe(true);
+      expect(res.body).toEqual({
+        recipient,
+        email: true,
+        sms: true,
+        push: true,
+      });
     });
 
     it('POST /unsubscribe opts out of a channel', async () => {
@@ -360,13 +401,42 @@ describe('Notification Hub API Endpoints', () => {
       expect(res.body.length).toBeGreaterThan(0);
     });
 
-    it('DELETE removes a webhook', async () => {
+    it('skips deliveries when webhook does not subscribe to record.delivered', async () => {
+      await request(app)
+        .post('/api/v1/webhooks')
+        .set(auth)
+        .send({ url: 'https://example.com/hook', events: ['record.failed'] });
+      await request(app)
+        .post('/api/v1/send')
+        .set(auth)
+        .send({ recipient: 'a@b.com', channel: 'email', templateId: 'welcome-email' });
+      const res = await request(app).get('/api/v1/webhooks/deliveries').set(auth);
+      expect(res.status).toBe(200);
+      expect(res.body.length).toBe(0);
+    });
+
+    it('POST rejects non-array events', async () => {
+      const res = await request(app)
+        .post('/api/v1/webhooks')
+        .set(auth)
+        .send({ url: 'https://example.com/hook', events: 'record.delivered' });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('INVALID_TEMPLATE_BODY');
+    });
+
+    it('DELETE removes a webhook and its delivery history', async () => {
       const created = await request(app)
         .post('/api/v1/webhooks')
         .set(auth)
         .send({ url: 'https://example.com/hook' });
+      await request(app)
+        .post('/api/v1/send')
+        .set(auth)
+        .send({ recipient: 'a@b.com', channel: 'email', templateId: 'welcome-email' });
       const res = await request(app).delete(`/api/v1/webhooks/${created.body.id}`).set(auth);
       expect(res.status).toBe(204);
+      const deliveries = await request(app).get('/api/v1/webhooks/deliveries').set(auth);
+      expect(deliveries.body.length).toBe(0);
     });
 
     it('GET unknown webhook returns WEBHOOK_NOT_FOUND', async () => {

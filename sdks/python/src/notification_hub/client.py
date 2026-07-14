@@ -365,14 +365,26 @@ class NotificationClient:
     def send(self, recipient: str, channel: str, raw_message: str) -> NotificationResponse:
         """Deprecated. Prefer :meth:`send_notification`.
 
-        Sends through the legacy path by using template id ``legacy-raw-template``
-        and ``{"body": raw_message}``.
+        Convenience wrapper that sends through the seeded template for ``channel``
+        (``welcome-email``, ``otp-sms``, or ``payment-push``) with common placeholder
+        keys set to ``raw_message``.
         """
+        if channel == "sms":
+            template_id = "otp-sms"
+        elif channel == "push":
+            template_id = "payment-push"
+        else:
+            template_id = "welcome-email"
         return self.send_notification(
             recipient,
             channel,
-            "legacy-raw-template",
-            {"body": raw_message},
+            template_id,
+            {
+                "body": raw_message,
+                "name": raw_message,
+                "code": raw_message,
+                "amount": raw_message,
+            },
         )
 
     def get_record(self, record_id: str) -> DeliveryRecord:

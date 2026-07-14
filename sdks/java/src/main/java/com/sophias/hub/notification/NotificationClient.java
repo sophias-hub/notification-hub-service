@@ -193,12 +193,19 @@ public class NotificationClient {
 
   /**
    * @deprecated Prefer {@link #sendNotification(String, String, String, Map)}.
-   * Sends through the legacy path by using template id {@code legacy-raw-template}
-   * and a body of {@code {body: rawMessage}}.
+   * Convenience wrapper that sends through the seeded template for {@code channel}
+   * ({@code welcome-email}, {@code otp-sms}, or {@code payment-push}) with common
+   * placeholder keys set to {@code rawMessage}.
    */
   @Deprecated
   public NotificationResponse send(String recipient, String channel, String rawMessage) {
-    return sendNotification(recipient, channel, "legacy-raw-template", Map.of("body", rawMessage));
+    String templateId =
+        "sms".equals(channel) ? "otp-sms" : "push".equals(channel) ? "payment-push" : "welcome-email";
+    return sendNotification(
+        recipient,
+        channel,
+        templateId,
+        Map.of("body", rawMessage, "name", rawMessage, "code", rawMessage, "amount", rawMessage));
   }
 
   /**

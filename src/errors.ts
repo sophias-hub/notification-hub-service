@@ -26,7 +26,9 @@ export class ApiError extends Error {
     this.status = status;
     this.error = error;
     this.code = code;
-    this.details = details;
+    if (details !== undefined) {
+      this.details = details;
+    }
   }
 
   toJSON(): ApiErrorBody {
@@ -93,15 +95,6 @@ export const Errors = {
       'NotFound',
       'WEBHOOK_NOT_FOUND',
       `No webhook with id '${id}'.`,
-      { id }
-    ),
-
-  templateIdExists: (id: string) =>
-    new ApiError(
-      409,
-      'Conflict',
-      'TEMPLATE_ID_EXISTS',
-      `A template with id '${id}' already exists.`,
       { id }
     ),
 
